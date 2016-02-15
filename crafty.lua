@@ -97,7 +97,7 @@ function crafty:OnEnable()
 		-- Editbox for search text
 		self.frame.SearchBox = CreateFrame("EditBox", nil, self.frame, "InputBoxTemplate")
 		self.frame.SearchBox:SetAutoFocus(false)
-		self.frame.SearchBox:SetWidth(110)
+		self.frame.SearchBox:SetWidth(138)
 		self.frame.SearchBox:SetHeight(20)
 		self.frame.SearchBox:SetPoint("LEFT", self.frame, "LEFT", 20, 0)
 		self.frame.SearchBox:SetBackdropColor(TOOLTIP_DEFAULT_COLOR.r, TOOLTIP_DEFAULT_COLOR.g, TOOLTIP_DEFAULT_COLOR.b)
@@ -121,14 +121,6 @@ function crafty:OnEnable()
 		self.frame.ResetButton:SetPoint("RIGHT", self.frame, "RIGHT", -15, 0)
 		self.frame.ResetButton:SetText(self.LOCALS.FRAME_RESET_TEXT)
 		self.frame.ResetButton:SetScript("OnClick", function() self:Reset() end)
-		
-		-- Submit Button
-		self.frame.SubmitButton = CreateFrame("Button", nil, self.frame, "GameMenuButtonTemplate")
-		self.frame.SubmitButton:SetWidth(20)
-		self.frame.SubmitButton:SetHeight(25)
-		self.frame.SubmitButton:SetPoint("RIGHT", self.frame.ResetButton, "LEFT", -10, 0)
-		self.frame.SubmitButton:SetText(self.LOCALS.FRAME_SUBMIT_TEXT)
-		self.frame.SubmitButton:SetScript("OnClick", function() self:Search() end)
 	
 		-- SearchType dropdown button to show the menu when clicked.
 		self.frame.SearchTypeButton = CreateFrame("Button", nil, self.frame, "GameMenuButtonTemplate")
@@ -526,12 +518,10 @@ function crafty:Search()
 
 end
 
-----------------------------------------
 -- Reset the skill frames.
 function crafty:Reset()
-	self.searchText = ""
-	self.frame.SearchBox:ClearFocus();
-	self.frame.SearchBox:SetText(self.searchText);
+	self.searchText = ''
+	self.frame.SearchBox:SetText('')
 	self.clearHistory()
 	self:Update(getglobal(frames.craft.elements.Main) and getglobal(frames.craft.elements.Main):IsShown())
 end
