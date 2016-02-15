@@ -553,7 +553,7 @@ function crafty:BuildListByName(searchText, craft)
 	
 	local skillName, skillType, numAvailable, isExpanded
 	for i=1, (craft and GetNumCrafts() or GetNumTradeSkills()), 1 do
-		if ( craft ) then
+		if craft then
 			skillName, _, skillType, numAvailable, isExpanded = GetCraftInfo(i)
 		else
 			skillName, skillType, numAvailable, isExpanded = GetTradeSkillInfo(i)
@@ -568,13 +568,13 @@ function crafty:BuildListByName(searchText, craft)
 				index 			= i,
 				rating 			= rating,
 			})
-		elseif ( skillType == "header" and not isExpanded ) then
+		elseif skillType == 'header' and not isExpanded then
 			-- We need to expand any unexpanded header types, otherwise we can't parse their sub data.
 			ExpandTradeSkillSubClass(i)
 		end
 	end
 	
-	sort(self.found, function(a, b) return b.rating < a.rating end)
+	sort(self.found, function(a, b) return b.rating < a.rating or a.rating == b.rating and strlen(a.name) < strlen(b.name) end)
 end
 
 ----------------------------------------
