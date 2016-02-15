@@ -266,6 +266,8 @@ function crafty:OnShow()
 		self.frame.SearchBox:SetText(self.searchText)
 	end
 	
+	self.frame.SearchBox:SetFocus()
+	
 	self:Debug("OnShowCurrentWindow:"..getglobal(self.currentFrame.elements.Title):GetText())
 	-- Update the "Type" dropdown so that it reflects the current searchType or "Name" by default.
 	if ( self.getSearchType() ~= nil ) then
