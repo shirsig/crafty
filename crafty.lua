@@ -112,19 +112,7 @@ function crafty:OnEnable()
 			end
 		end)
 		self.frame.SearchBox:SetScript("OnEnterPressed", function()
-			if IsShiftKeyDown() then
-				local target = ChatEdit_GetLastTellTarget(ChatFrameEditBox) ~= '' and ChatEdit_GetLastTellTarget(ChatFrameEditBox)
-				local channel = GetNumPartyMembers() == 0 and 'WHISPER' or 'PARTY'
-				if channel == 'PARTY' or target then
-					crafty:SendReagentsMessage(channel, target)
-				end
-			else
-				if getglobal(frames.craft.elements.Main) and getglobal(frames.craft.elements.Main):IsShown() then
-					DoCraft(GetCraftSelectionIndex())
-				else
-					DoTradeSkill(GetTradeSkillSelectionIndex())
-				end
-			end
+			this:ClearFocus()
 		end)
 		
 		-- Reset Button
@@ -183,11 +171,20 @@ function crafty:OnEnable()
 		self.frame.LinkReagentButton:SetHeight(25)
 		self.frame.LinkReagentButton:SetPoint("LEFT", self.frame.SearchTypeButton, "RIGHT", 8, 0)
 		self.frame.LinkReagentButton:SetText(self.LOCALS.FRAME_LINK_REAGENTS)
+		self.frame.LinkReagentButton:RegisterForClicks('LeftButtonUp', 'RightButtonUp')
 		self.frame.LinkReagentButton:SetScript("OnClick", function() 
-				if ( dewdrop:IsOpen(self.frame.LinkReagentButton) ) then 
+				if dewdrop:IsOpen(self.frame.LinkReagentButton) then 
 					dewdrop:Close()	
-				else 
+				elseif arg1 == 'RightButton' then
 					dewdrop:Open(self.frame.LinkReagentButton) 
+				end
+
+				if arg1 == 'LeftButton' then
+					local target = ChatEdit_GetLastTellTarget(ChatFrameEditBox) ~= '' and ChatEdit_GetLastTellTarget(ChatFrameEditBox)
+					local channel = GetNumPartyMembers() == 0 and 'WHISPER' or 'PARTY'
+					if channel == 'PARTY' or target then
+						crafty:SendReagentsMessage(channel, target)
+					end
 				end
 			end
 		)
@@ -270,10 +267,6 @@ function crafty:OnShow()
 	end
 	
 	self:Search()
-
-	if not ChatFrameEditBox:IsVisible() then
-		self.frame.SearchBox:SetFocus()
-	end
 	
 	self:Debug("OnShowCurrentWindow:"..getglobal(self.currentFrame.elements.Title):GetText())
 	-- Update the "Type" dropdown so that it reflects the current searchType or "Name" by default.
