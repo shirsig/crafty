@@ -103,6 +103,13 @@ function crafty:OnEnable()
 		self.frame.SearchBox:SetBackdropColor(TOOLTIP_DEFAULT_COLOR.r, TOOLTIP_DEFAULT_COLOR.g, TOOLTIP_DEFAULT_COLOR.b)
 		self.frame.SearchBox:SetBackdropBorderColor(TOOLTIP_DEFAULT_BACKGROUND_COLOR.r, TOOLTIP_DEFAULT_BACKGROUND_COLOR.g, TOOLTIP_DEFAULT_BACKGROUND_COLOR.b)
 		self.frame.SearchBox:SetScript("OnTextChanged", function() self:Search() end)
+		self.frame.SearchBox:SetScript("OnChar", function()
+			if arg1 == '/' then
+				this:SetText(gsub(this:GetText(), '/', ''))
+				ChatFrameEditBox:Show()
+				ChatFrameEditBox:SetText('/')
+			end
+		end)
 		self.frame.SearchBox:SetScript("OnEnterPressed", function()
 			if getglobal(frames.craft.elements.Main) and getglobal(frames.craft.elements.Main):IsShown() then
 				DoCraft(GetCraftSelectionIndex())
