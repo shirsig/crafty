@@ -128,42 +128,14 @@ function crafty:OnEnable()
 		self.frame.SearchTypeButton:SetWidth(70)
 		self.frame.SearchTypeButton:SetHeight(25)
 		self.frame.SearchTypeButton:SetPoint("LEFT", self.frame.SearchBox, "RIGHT", 8, 0)
-		self.frame.SearchTypeButton:SetText("Type")
-		self.frame.SearchTypeButton:SetScript("OnClick", function() 
-				if ( dewdrop:IsOpen(self.frame.SearchTypeButton) ) then 
-					dewdrop:Close()	
-				else 
-					dewdrop:Open(self.frame.SearchTypeButton) 
-				end
-			end
-		)	
-		
-		-- Create the SearchType dropdown menu
-		dewdrop:Register(self.frame.SearchTypeButton,
-			'point', function (parent)
-				return "TOPLEFT", "BOTTOMLEFT"
-			end,
-			'dontHook', true,
-			'children', function ()
-				dewdrop:AddLine(
-					'text', crafty.LOCALS.FRAME_SEARCH_TYPE_TITLE,
-					'isTitle', true
-				)
-				for i,type in self.LOCALS.FRAME_SEARCH_TYPES do
-					dewdrop:AddLine(
-						'text', type,
-						'func', function(val)
-							self.setSearchType(val)
-							self.frame.SearchTypeButton:SetText(val)
-						end,
-						'arg1', type,
-						'tooltipTitle', type,
-						'tooltipText', self.LOCALS.FRAME_SEARCH_TYPES_DESC[i],
-						'closeWhenClicked', true
-					)
-				end
-			end
-		)
+		self.frame.SearchTypeButton.index = 1
+		self.frame.SearchTypeButton:SetScript("OnClick", function()
+			this.index = mod(this.index, 3) + 1
+			local new_type = self.LOCALS.FRAME_SEARCH_TYPES[this.index]
+			this:SetText(new_type)
+			self.setSearchType(new_type)
+			self:Search()
+		end)	
 		
 		-- Link Reagents dropdown button to show the menu when clicked.
 		self.frame.LinkReagentButton = CreateFrame("Button", nil, self.frame, "GameMenuButtonTemplate")
@@ -480,7 +452,6 @@ function crafty:Update(craft)
 			end
 		end
 	else
-		crafty:Debug("Calling original update functions:"..(craft and frames.craft.update or frames.trade.update))
 		self.hooks[ craft and frames.craft.update or frames.trade.update ].orig()
 	end
 end
@@ -494,7 +465,6 @@ end
 ----------------------------------------
 -- Begin the search and clear out the scrolling frame so it's not out of position.
 function crafty:Search()
-	self:Debug("Search called; currentFrame="..self.currentFrame.elements.Main)
 	self.searchText = self.frame.SearchBox:GetText()
 	-- Need to reset / create our self.found array.
 	self.found = {}
