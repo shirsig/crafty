@@ -163,11 +163,11 @@ function crafty:OnEnable()
 		
 		-- Create the LinkReagents dropdown menu
 		dewdrop:Register(self.frame.LinkReagentButton,
-			'point', function (parent)
+			'point', function(parent)
 				return "TOPLEFT", "BOTTOMLEFT"
 			end,
 			'dontHook', true,
-			'children', function ()
+			'children', function()
 				dewdrop:AddLine(
 					'text', crafty.LOCALS.FRAME_LINK_REAGENTS_TITLE,
 					'isTitle', true
@@ -179,7 +179,7 @@ function crafty:OnEnable()
 					-- channel[1] is the "common name"
 					-- channel[2] is the "channel"
 					-- channel[3] is the "desc"
-					if ( channel[2] ~= "WHISPER" and channel[2] ~= "CHANNEL" ) then
+					if channel[2] ~= "WHISPER" and channel[2] ~= "CHANNEL" then
 						dewdrop:AddLine(
 							'text', channel[1],
 							'func', function(val)
@@ -207,9 +207,9 @@ function crafty:OnEnable()
 	end
 	
 	-- If the mod was disabled when WoW loaded, then the main frame will not be visible. So we'll make it visible again.
-	if ( getglobal(frames.trade.elements.Main) and getglobal(frames.trade.elements.Main):IsShown() ) then
+	if getglobal(frames.trade.elements.Main) and getglobal(frames.trade.elements.Main):IsShown() then
 		crafty:TRADE_SKILL_SHOW()
-	elseif ( getglobal(frames.craft.elements.Main) and getglobal(frames.craft.elements.Main):IsShown() ) then
+	elseif getglobal(frames.craft.elements.Main) and getglobal(frames.craft.elements.Main):IsShown() then
 		crafty:CRAFT_SHOW()
 	end
 end
@@ -224,11 +224,11 @@ function crafty:OnDisable()
 	self.searchText = ""
 	
 	-- Finally, update the trade/craft windows just in case we have any lingering search results.
-	if ( self.hooks and self.hooks[frames.trade.update] ) then
+	if self.hooks and self.hooks[frames.trade.update] then
 		getglobal(frames.trade.update)()
 	end
 	
-	if ( self.hooks and self.hooks[frames.craft.update] ) then
+	if self.hooks and self.hooks[frames.craft.update] then
 		getglobal(frames.craft.update)()
 	end
 end
@@ -240,9 +240,8 @@ function crafty:OnShow()
 	
 	self:Search()
 	
-	self:Debug("OnShowCurrentWindow:"..getglobal(self.currentFrame.elements.Title):GetText())
 	-- Update the "Type" dropdown so that it reflects the current searchType or "Name" by default.
-	if ( self.getSearchType() ~= nil ) then
+	if self.getSearchType() ~= nil then
 		self.frame.SearchTypeButton:SetText(self.getSearchType())
 	else
 		self.frame.SearchTypeButton:SetText(self.getSearchType(1))
@@ -250,10 +249,8 @@ function crafty:OnShow()
 end
 	
 function crafty:CRAFT_SHOW()
-	self:Debug("Crafting window open.")
 	-- first time window has been opened
-	if ( not self.hooks or not self.hooks[frames.craft.update] ) then
-		self:Debug("First time crafting window has opened, register close and hooking the update.")
+	if not self.hooks or not self.hooks[frames.craft.update] then
 		self:RegisterEvent("CRAFT_CLOSE", "OnClose")
 		self:Hook(frames.craft.update, function () self:Update(true) end)
 	end
@@ -262,7 +259,7 @@ function crafty:CRAFT_SHOW()
 	self.currentFrame = frames.craft
 	
 	-- Is the tradeskill window open? If so we'll need to close it.
-	if ( getglobal(frames.trade.elements.Main) and getglobal(frames.trade.elements.Main):IsShown() ) then
+	if getglobal(frames.trade.elements.Main) and getglobal(frames.trade.elements.Main):IsShown() then
 		getglobal(frames.trade.elements.Main):Hide()
 	end
 	
@@ -282,15 +279,13 @@ function crafty:CRAFT_SHOW()
 end
 
 function crafty:TRADE_SKILL_SHOW()
-	self:Debug("Tradeskill window open.")
 	-- first time window has been opened
-	if ( not self.hooks or not self.hooks[frames.trade.update] ) then
-		self:Debug("First time trade skill window has opened, register close and hooking the update.")
+	if not self.hooks or not self.hooks[frames.trade.update] then
 		self:RegisterEvent("TRADE_SKILL_CLOSE", "OnClose")
 		self:Hook(frames.trade.update, function () self:Update() end)
 		
 		-- Check if AutoCraft exists, if it does we're going to have to anchor to something different.
-		if ( AutoCraftFrame ) then 
+		if AutoCraftFrame then 
 			frames.trade.anchor = "AutoCraftRunAutomatically"
 			frames.trade.anchor_offset_x = -7
 		end
@@ -300,7 +295,7 @@ function crafty:TRADE_SKILL_SHOW()
 	self.currentFrame = frames.trade
 	
 	-- Is the crafting window open? If so we'll need to close it.
-	if ( getglobal(frames.craft.elements.Main) and getglobal(frames.craft.elements.Main):IsShown() ) then
+	if getglobal(frames.craft.elements.Main) and getglobal(frames.craft.elements.Main):IsShown() then
 		getglobal(frames.craft.elements.Main):Hide()
 	end
 	
@@ -309,7 +304,7 @@ function crafty:TRADE_SKILL_SHOW()
 	self.frame:SetPoint("TOPLEFT", getglobal(frames.trade.anchor), "BOTTOMLEFT" , frames.trade.anchor_offset_x, frames.trade.anchor_offset_y)
 	-- Check if the frame was already shown, which means they just changed tradeskills and no update with the OnShow.
 	-- Otherwise, lets just show the frame.
-	if ( self.frame:IsShown() ) then
+	if self.frame:IsShown() then
 		self:OnShow()
 	else
 		self.frame:Show()
@@ -320,21 +315,20 @@ function crafty:TRADE_SKILL_SHOW()
 end
 
 function crafty:OnClose()
-	self:Debug("Tradeskill/Craft window close.")
 	self.frame:Hide()
+	dewdrop:Close()	
 end
 
 function crafty:Update(craft) 
-	self:Debug("crafty:Update called.")
 
 	-- Update the search history and searh type dropdown
 	self.setHistory(self.searchText)
 	-- The user has changed their trade window, reset the search text if they haven't searched before
-	if ( not self.lastSearchTrade or self.lastSearchTrade ~= getglobal(self.currentFrame.elements.Title):GetText() ) then
+	if not self.lastSearchTrade or self.lastSearchTrade ~= getglobal(self.currentFrame.elements.Title):GetText() then
 		-- Now we update last searched to the current trade/craft type/window name
 		self.lastSearchTrade = getglobal(self.currentFrame.elements.Title):GetText()
 		-- Does old text for the current window exist? 
-		if ( self.getHistory(self.lastSearchTrade) ) then
+		if self.getHistory(self.lastSearchTrade) then
 			self:Debug("Found history: "..self.lastSearchTrade)
 			self.searchText = self.getHistory(self.lastSearchTrade)
 		else
@@ -346,22 +340,22 @@ function crafty:Update(craft)
 	end
 	
 	-- The user has decided to search for 
-	if self:GetSearchText() ~= '' and getglobal(self.currentFrame.elements.Main):IsShown() then
+	if self.searchText ~= '' and getglobal(self.currentFrame.elements.Main):IsShown() then
 		local searchType = self.getSearchType()
 		local skillOffset = FauxScrollFrame_GetOffset(getglobal(self.currentFrame.elements.Scroll))	
 		local skillButton = nil
 		
 		-- Keeps the list from being rebuilt unncessarily when the user is scrolling through search results.
-		if ( self.found and getn(self.found) == 0 ) then
-			if ( searchType == "Reagent" ) then
+		if self.found and getn(self.found) == 0 then
+			if searchType == 'Reagent' then
 				-- search by reagent results
-				self:BuildListByReagent(self:GetSearchText(), craft)
-			elseif ( searchType == "Requires" ) then
+				self:BuildListByReagent(self.searchText, craft)
+			elseif searchType == 'Requires' then
 				-- search by requires results
-				self:BuildListByRequire(self:GetSearchText(), craft)
+				self:BuildListByRequire(self.searchText, craft)
 			else
 				-- search by name results
-				self:BuildListByName(self:GetSearchText(), craft)
+				self:BuildListByName(self.searchText, craft)
 			end
 		end
 						
@@ -377,13 +371,13 @@ function crafty:Update(craft)
 		if getn(self.found) > 0 then
 					
 			-- Do the actual display of the list now.
-			for i=1, (craft and CRAFTS_DISPLAYED or TRADE_SKILLS_DISPLAYED), 1 do
+			for i=1,craft and CRAFTS_DISPLAYED or TRADE_SKILLS_DISPLAYED, 1 do
 				local skillIndex = i + skillOffset
 				skillButton = getglobal((craft and "Craft" or "TradeSkillSkill")..i)
 				
-				if ( i <= getn(self.found) ) then
+				if i <= getn(self.found) then
 					-- Set button widths if scrollbar is shown or hidden
-					if ( getglobal(self.currentFrame.elements.Scroll):IsVisible() ) then
+					if getglobal(self.currentFrame.elements.Scroll):IsVisible() then
 						skillButton:SetWidth(293)
 					else
 						skillButton:SetWidth(323)
@@ -391,26 +385,26 @@ function crafty:Update(craft)
 					
 					self:Debug("self.found["..skillIndex.."].type="..self.found[skillIndex].type)
 					local color = (craft and CraftTypeColor[self.found[skillIndex].type] or TradeSkillTypeColor[self.found[skillIndex].type])
-					if ( color ) then
+					if color then
 						skillButton:SetTextColor(color.r, color.g, color.b)
 					end
 					skillButton:SetID(self.found[skillIndex].index)
 					skillButton:Show()
 					
-					if ( self.found[skillIndex].name == "" ) then
+					if self.found[skillIndex].name == '' then
 						return
 					end
 					
-					skillButton:SetNormalTexture("")
+					skillButton:SetNormalTexture('')
 					getglobal((craft and "Craft" or "TradeSkillSkill")..i.."Highlight"):SetTexture("")
-					if ( self.found[skillIndex].available == 0 ) then
+					if self.found[skillIndex].available == 0 then
 						skillButton:SetText(" "..self.found[skillIndex].name)
 					else
 						skillButton:SetText(" ".. self.found[skillIndex].name .." [".. self.found[skillIndex].available .."]")
 					end
 					
 					-- Place the highlight and lock the highlight state
-					if ( (craft and GetCraftSelectionIndex() or GetTradeSkillSelectionIndex()) == self.found[skillIndex].index ) then
+					if (craft and GetCraftSelectionIndex() or GetTradeSkillSelectionIndex()) == self.found[skillIndex].index then
 						getglobal(self.currentFrame.elements.Highlight):SetPoint("TOPLEFT", skillButton, "TOPLEFT", 0, 0)
 						getglobal(self.currentFrame.elements.Highlight):Show()
 						skillButton:LockHighlight()
@@ -421,7 +415,7 @@ function crafty:Update(craft)
 					else
 						-- The highlight is shown, but it's on an entry that we haven't selected. Probably a remnant from a selection before we did our search,
 						-- so we'll go ahead and hide the frame.
-						if ( not self:SelectionInList(skillOffset, craft)  ) then
+						if not self:SelectionInList(skillOffset, craft) then
 							getglobal(self.currentFrame.elements.Highlight):Hide()
 						end
 						skillButton:UnlockHighlight()
@@ -443,7 +437,7 @@ function crafty:Update(craft)
 				skillButton:UnlockHighlight();
 				skillButton:Show()
 				
-				if ( i == 1 ) then
+				if i == 1 then
 					getglobal(self.currentFrame.elements.Highlight):Hide()
 					skillButton:SetText(self.LOCALS.FRAME_NO_RESULTS)
 				else 
@@ -456,14 +450,6 @@ function crafty:Update(craft)
 	end
 end
 
-----------------------------------------
--- Retrieve the current searchText.
-function crafty:GetSearchText()
-	return self.searchText
-end
-
-----------------------------------------
--- Begin the search and clear out the scrolling frame so it's not out of position.
 function crafty:Search()
 	self.searchText = self.frame.SearchBox:GetText()
 	-- Need to reset / create our self.found array.
@@ -498,7 +484,7 @@ end
 
 function crafty:SelectionInList(skillOffset, craft)
 	for i=skillOffset+1, skillOffset+(craft and CRAFTS_DISPLAYED or TRADE_SKILLS_DISPLAYED), 1 do
-		if ( self.found[i] and self.found[i].index == (craft and GetCraftSelectionIndex() or GetTradeSkillSelectionIndex()) ) then
+		if self.found[i] and self.found[i].index == (craft and GetCraftSelectionIndex() or GetTradeSkillSelectionIndex()) then
 			return true
 		end
 	end
@@ -537,8 +523,6 @@ function crafty:BuildListByName(searchText, craft)
 	sort(self.found, function(a, b) return b.rating < a.rating or a.rating == b.rating and strlen(a.name) < strlen(b.name) end)
 end
 
-----------------------------------------
--- Build search list by required.
 function crafty:BuildListByRequire(searchText, craft)
 	local foundIndex = 0
 	self.found = {}
@@ -554,7 +538,7 @@ function crafty:BuildListByRequire(searchText, craft)
 			requires = GetTradeSkillTools(i)
 		end
 		
-		if ( requires and strfind(string.lower(BuildColoredListString(requires)), string.lower(searchText)) and skillType ~= "header" ) then
+		if requires and strfind(string.lower(BuildColoredListString(requires)), string.lower(searchText)) and skillType ~= 'header' then
 			self:Debug("Found matching require for '"..searchText.."': "..requires.." ")
 			foundIndex = foundIndex + 1
 			self.found[foundIndex] = {}
@@ -564,37 +548,35 @@ function crafty:BuildListByRequire(searchText, craft)
 				available		= numAvailable,
 				index 			= i
 			}	
-		elseif ( skillType == "header" and not isExpanded ) then
+		elseif skillType == 'header' and not isExpanded then
 			-- We need to expand any unexpanded header types, otherwise we can't parse their sub data.
 			ExpandTradeSkillSubClass(i)
 		end
 	end
 end
 
-----------------------------------------
--- Build search list reagent name.
 function crafty:BuildListByReagent(searchText, craft)
 	local foundIndex = 0
 	self.found = {}
 	
 	local skillName, skillType, numAvailable, isExpanded, reagentName
 	for i=1, (craft and GetNumCrafts() or GetNumTradeSkills()), 1 do
-		if ( craft ) then
+		if craft then
 			skillName, _, skillType, numAvailable, isExpanded = GetCraftInfo(i)
 		else
 			skillName, skillType, numAvailable, isExpanded = GetTradeSkillInfo(i)
 		end
 		
-		if ( skillType ~= "header" ) then
-			for e=1, (craft and GetCraftNumReagents(i) or GetTradeSkillNumReagents(i)), 1 do
-				if ( craft ) then
+		if skillType ~= 'header' then
+			for e=1,craft and GetCraftNumReagents(i) or GetTradeSkillNumReagents(i), 1 do
+				if craft then
 					reagentName, _, _, _ = GetCraftReagentInfo(i, e)
 				else
 					reagentName, _, _, _ = GetTradeSkillReagentInfo(i, e)
 				end
 				
 				
-				if ( reagentName and strfind(string.lower(reagentName), string.lower(searchText)) ) then
+				if reagentName and strfind(string.lower(reagentName), string.lower(searchText)) then
 					foundIndex = foundIndex + 1
 					self.found[foundIndex] = {}
 					self.found[foundIndex] = {
@@ -607,62 +589,42 @@ function crafty:BuildListByReagent(searchText, craft)
 					break
 				end
 			end
-		elseif ( skillType == "header" and not isExpanded ) then
+		elseif skillType == 'header' and not isExpanded then
 			-- We need to expand any unexpanded header types, otherwise we can't parse their sub data.
 			ExpandTradeSkillSubClass(i)
 		end
 	end
 end
 
-----------------------------------------
--- Utility function to reagent information to chat.
 function crafty:SendReagentsMessage(channel, who)
-	local sIndex, itemString
-	local tempString = ""
-	local reagentLinks = {}
-	local reagentCounts = {}
 	local craft = getglobal(frames.craft.elements.Main) and getglobal(frames.craft.elements.Main):IsShown()
-	
-	-- Figure out which window is open or exit function
-	if ( getglobal(self.currentFrame.elements.Main):IsShown() ) then
-		sIndex = craft and GetCraftSelectionIndex() or GetTradeSkillSelectionIndex()
-		self:Debug("SRM: GetTradeSkillSelectionIndex="..GetTradeSkillSelectionIndex())
-	else
-		return
+
+	local index = craft and GetCraftSelectionIndex() or GetTradeSkillSelectionIndex()
+
+	local message = {}
+
+	local message_part = (craft and GetCraftItemLink(index) or GetTradeSkillItemLink(index))..' ='
+	for i=1,craft and GetCraftNumReagents(index) or GetTradeSkillNumReagents(index) do
+		local reagent_link = craft and GetCraftReagentItemLink(index, i) or GetTradeSkillReagentItemLink(index, i)
+		local reagent_count = (craft and { GetCraftReagentInfo(index, i) } or { GetTradeSkillReagentInfo(index, i) })[3]
+
+		local reagent_info = format(
+			'%s x %i',
+			reagent_link,
+			reagent_count
+		)
+		if strlen(message_part..reagent_info) > 255 then
+			tinsert(message, message_part)
+			message_part = '(cont.)'
+		end
+		message_part = message_part..' '..reagent_info
 	end
-	
-	self:Debug("SRM: sIndex = "..sIndex)
-	-- Double check the user has a skill selected.
-	if ( sIndex > 0 ) then
-		-- Insert the name first.
-		itemString = craft and GetCraftItemLink(sIndex) or GetTradeSkillItemLink(sIndex)
-		
-		-- Cycle through all the reagents and get the required amounts for each into two nice arrays
-		for rIndex=1, (craft and GetCraftNumReagents(sIndex) or GetTradeSkillNumReagents(sIndex)), 1 do
-			if ( craft ) then
-				reagentLinks[rIndex] = GetCraftReagentItemLink(sIndex, rIndex) 
-				_, _, reagentCounts[rIndex], _ = GetCraftReagentInfo(sIndex, rIndex) 
-			else
-				reagentLinks[rIndex] = GetTradeSkillReagentItemLink(sIndex, rIndex)
-				_, _, reagentCounts[rIndex], _ = GetTradeSkillReagentInfo(sIndex, rIndex) 
-			end
-		end
-		
-		-- Now we'll make strings out of them, 4 reagent links at a time and print them out when we reach our limit.
-		
-		for i=1, getn(reagentLinks) do 
-			tempString = tostring(tempString) .. reagentLinks[i] .. "x" .. reagentCounts[i] .. " "
-			if ( mod(i,3) == 0 or i == getn(reagentLinks) ) then
-				-- Combine the item name, add (cont) if this is the second go round.
-				tempString = itemString .. (i > 3 and " (cont) = " or " = ")  .. tempString
-				SendChatMessage(tempString, channel, GetDefaultLanguage("player"), who)
-				tempString = ""
-			end
-		end
+	tinsert(message, message_part)
+
+	for _, part in ipairs(message) do
+		SendChatMessage(part, channel, GetDefaultLanguage('player'), who)
 	end
 end
-
-----------------------------------------
 
 function crafty:fuzzy(input)
 	local uppercase_input = strupper(input)
