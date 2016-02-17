@@ -104,13 +104,10 @@ function crafty:OnEnable()
 		self.frame.SearchBox:SetBackdropBorderColor(TOOLTIP_DEFAULT_BACKGROUND_COLOR.r, TOOLTIP_DEFAULT_BACKGROUND_COLOR.g, TOOLTIP_DEFAULT_BACKGROUND_COLOR.b)
 		self.frame.SearchBox:SetScript("OnTextChanged", function() self:Search() end)
 		self.frame.SearchBox:SetScript("OnEnterPressed", function()
-			if getn(self.found) == 0 then
-				return
-			end
 			if getglobal(frames.craft.elements.Main) and getglobal(frames.craft.elements.Main):IsShown() then
-				DoCraft(self.found[1].index)
+				DoCraft(GetCraftSelectionIndex())
 			else
-				DoTradeSkill(self.found[1].index)
+				DoTradeSkill(GetTradeSkillSelectionIndex())
 			end
 		end)
 		
@@ -252,12 +249,12 @@ function crafty:OnDisable()
 end
 
 function crafty:OnShow()
-	self:Debug("OnShow called.")
-	-- Insert previous search text, if any.
 	if self.searchText ~= nil then
 		self.frame.SearchBox:SetText(self.searchText)
 	end
 	
+	self:Search()
+
 	if not ChatFrameEditBox:IsVisible() then
 		self.frame.SearchBox:SetFocus()
 	end
@@ -507,17 +504,13 @@ function crafty:Search()
 	local craft = getglobal(frames.craft.elements.Main) and getglobal(frames.craft.elements.Main):IsShown()
 
 	self:Update(craft)
-	
-	if getn(self.found) > 0 then
-		if craft then
-			CraftFrame_SetSelection(self.found[1].index)
-		else
-			TradeSkillFrame_SetSelection(self.found[1].index)
-		end
-		
-		self:Update(craft)
+	local index = getn(self.found) > 0 and self.found[1].index or 1
+	if craft then
+		CraftFrame_SetSelection(index)
+	else
+		TradeSkillFrame_SetSelection(index)
 	end
-
+	self:Update(craft)
 end
 
 -- Reset the skill frames.
