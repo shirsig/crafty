@@ -111,10 +111,18 @@ function crafty:OnEnable()
 			end
 		end)
 		self.frame.SearchBox:SetScript("OnEnterPressed", function()
-			if getglobal(frames.craft.elements.Main) and getglobal(frames.craft.elements.Main):IsShown() then
-				DoCraft(GetCraftSelectionIndex())
+			if IsShiftKeyDown() then
+				local target = ChatEdit_GetLastTellTarget(ChatFrameEditBox) ~= '' and ChatEdit_GetLastTellTarget(ChatFrameEditBox)
+				local channel = GetNumPartyMembers() == 0 and 'WHISPER' or 'PARTY'
+				if channel == 'PARTY' or target then
+					crafty:SendReagentsMessage(channel, target)
+				end
 			else
-				DoTradeSkill(GetTradeSkillSelectionIndex())
+				if getglobal(frames.craft.elements.Main) and getglobal(frames.craft.elements.Main):IsShown() then
+					DoCraft(GetCraftSelectionIndex())
+				else
+					DoTradeSkill(GetTradeSkillSelectionIndex())
+				end
 			end
 		end)
 		
