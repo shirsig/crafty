@@ -70,6 +70,9 @@ function crafty:OnEnable()
 	self:RegisterEvent("TRADE_SKILL_SHOW")
 	-- Enchanting window --
 	self:RegisterEvent("CRAFT_SHOW")
+
+	self:RegisterEvent("TRADE_SKILL_UPDATE")
+	self:RegisterEvent("CRAFT_UPDATE")
 	
 	if not self.frame then
 		self:Debug("Creating craftyFrame.")
@@ -247,7 +250,17 @@ function crafty:OnShow()
 		self.frame.SearchTypeButton:SetText(self.getSearchType(1))
 	end
 end
-	
+
+function crafty:TRADE_SKILL_UPDATE()
+	self.found = {}
+	self:Update()
+end
+
+function crafty:CRAFT_UPDATE()
+	self.found = {}
+	self:Update(true)
+end
+
 function crafty:CRAFT_SHOW()
 	-- first time window has been opened
 	if not self.hooks or not self.hooks[frames.craft.update] then
