@@ -381,7 +381,7 @@ function crafty:Update(craft)
 	end
 	
 	-- The user has decided to search for 
-	if ( self:GetSearchText() and getglobal(self.currentFrame.elements.Main):IsShown() ) then
+	if self:GetSearchText() ~= '' and getglobal(self.currentFrame.elements.Main):IsShown() then
 		local searchType = self.getSearchType()
 		local skillOffset = FauxScrollFrame_GetOffset(getglobal(self.currentFrame.elements.Scroll))	
 		local skillButton = nil
@@ -495,12 +495,7 @@ end
 ----------------------------------------
 -- Retrieve the current searchText.
 function crafty:GetSearchText()
-	-- The second argument is a search with only spaces.
-	if ( self.searchText ~= nil and string.len(string.gsub(self.searchText, "%s", "")) > 0 ) then
-		return self.searchText
-	else
-		return false
-	end
+	return self.searchText
 end
 
 ----------------------------------------
@@ -520,13 +515,14 @@ function crafty:Search()
 	local craft = getglobal(frames.craft.elements.Main) and getglobal(frames.craft.elements.Main):IsShown()
 
 	self:Update(craft)
-	local index = getn(self.found) > 0 and self.found[1].index or 1
-	if craft then
-		CraftFrame_SetSelection(index)
-	else
-		TradeSkillFrame_SetSelection(index)
+	if getn(self.found) > 0 then
+		if craft then
+			CraftFrame_SetSelection(self.found[1].index)
+		else
+			TradeSkillFrame_SetSelection(self.found[1].index)
+		end
+		self:Update(craft)
 	end
-	self:Update(craft)
 end
 
 -- Reset the skill frames.
@@ -549,7 +545,7 @@ end
 
 function crafty:BuildListByName(searchText, craft)
 	self.found = {}
-	
+
 	local matcher = self:fuzzy(searchText)
 	
 	local skillName, skillType, numAvailable, isExpanded
