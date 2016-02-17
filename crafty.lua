@@ -258,7 +258,9 @@ function crafty:OnShow()
 		self.frame.SearchBox:SetText(self.searchText)
 	end
 	
-	self.frame.SearchBox:SetFocus()
+	if not ChatFrameEditBox:IsVisible() then
+		self.frame.SearchBox:SetFocus()
+	end
 	
 	self:Debug("OnShowCurrentWindow:"..getglobal(self.currentFrame.elements.Title):GetText())
 	-- Update the "Type" dropdown so that it reflects the current searchType or "Name" by default.
