@@ -252,20 +252,24 @@ function crafty:OnShow()
 end
 
 function crafty:TRADE_SKILL_UPDATE()
-	self.found = {}
-	self:Update()
+	if self.currentFrame == frames.trade then
+		self.found = {}
+		self:Update()
+	end
 end
 
 function crafty:CRAFT_UPDATE()
-	self.found = {}
-	self:Update(true)
+	if self.currentFrame == frames.craft then
+		self.found = {}
+		self:Update(true)
+	end
 end
 
 function crafty:CRAFT_SHOW()
 	-- first time window has been opened
 	if not self.hooks or not self.hooks[frames.craft.update] then
 		self:RegisterEvent("CRAFT_CLOSE", "OnClose")
-		self:Hook(frames.craft.update, function () self:Update(true) end)
+		self:Hook(frames.craft.update, function() self:Update(true) end)
 	end
 	
 	-- Have to set our current frame for the widgets that load.
@@ -295,7 +299,7 @@ function crafty:TRADE_SKILL_SHOW()
 	-- first time window has been opened
 	if not self.hooks or not self.hooks[frames.trade.update] then
 		self:RegisterEvent("TRADE_SKILL_CLOSE", "OnClose")
-		self:Hook(frames.trade.update, function () self:Update() end)
+		self:Hook(frames.trade.update, function() self:Update() end)
 		
 		-- Check if AutoCraft exists, if it does we're going to have to anchor to something different.
 		if AutoCraftFrame then 
