@@ -108,6 +108,7 @@ function crafty:OnEnable()
 				this:SetText(gsub(this:GetText(), '/', ''))
 				ChatFrameEditBox:Show()
 				ChatFrameEditBox:SetText('/')
+				ChatFrameEditBox:SetFocus()
 			end
 		end)
 		self.frame.SearchBox:SetScript("OnEnterPressed", function()
