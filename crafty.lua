@@ -86,9 +86,7 @@ function crafty:ADDON_LOADED()
 	self.found = {}
 
 	self:RegisterEvent('TRADE_SKILL_SHOW')
-	self:RegisterEvent('TRADE_SKILL_CLOSE')
 	self:RegisterEvent('CRAFT_SHOW')
-	self:RegisterEvent('CRAFT_CLOSE')
 	
 	if not self.frame then
 		-- Create main frame 
@@ -225,6 +223,7 @@ function crafty:CRAFT_SHOW()
 
 	-- first time window has been opened
 	if not self.frames.craft.orig_update then
+		self:RegisterEvent('CRAFT_CLOSE')
 		self.frames.craft.orig_update = CraftFrame_Update
 		CraftFrame_Update = function() self:Update() end
 	end
@@ -239,6 +238,7 @@ function crafty:CRAFT_SHOW()
 	self.frame:SetPoint('TOPRIGHT', self.frames.craft.anchor, 'BOTTOMRIGHT', self.frames.craft.anchor_offset_x, self.frames.craft.anchor_offset_y)
 
 	self.frame:Show()
+	self:Update()
 	self:Search()
 end
 
@@ -247,6 +247,7 @@ function crafty:TRADE_SKILL_SHOW()
 
 	-- first time window has been opened
 	if not self.frames.trade.orig_update then
+		self:RegisterEvent('TRADE_SKILL_CLOSE')
 		self.frames.trade.orig_update = TradeSkillFrame_Update
 		TradeSkillFrame_Update = function() self:Update() end
 	end
@@ -262,6 +263,7 @@ function crafty:TRADE_SKILL_SHOW()
 
 	self.frame:Show()
 	self:Update()
+	self:Search()
 end
 
 function crafty:CRAFT_CLOSE()
@@ -278,12 +280,6 @@ function crafty:OnClose()
 end
 
 function crafty:Update()
-	if self.mode == CRAFT then
-		self.frames.craft.orig_update()
-	elseif self.mode == TRADE then
-		self.frames.trade.orig_update()
-	end
-
 	local searchType = SEARCH_TYPES[self:GetSearchType()]
 
 	self.frame.SearchTypeButton:SetText(searchType)
@@ -359,6 +355,12 @@ function crafty:Update()
 				skillButton = getglobal((self.mode == CRAFT and 'Craft' or 'TradeSkillSkill')..i)
 				skillButton:Hide()
 			end
+		end
+	else
+		if self.mode == CRAFT then
+			self.frames.craft.orig_update()
+		elseif self.mode == TRADE then
+			self.frames.trade.orig_update()
 		end
 	end
 end
