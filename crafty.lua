@@ -218,13 +218,6 @@ function crafty:ADDON_LOADED()
 			end
 		)
 	end
-	
-	-- If the mod was disabled when WoW loaded, then the main frame will not be visible. So we'll make it visible again.
-	if self.mode == TRADE then
-		crafty:TRADE_SKILL_SHOW()
-	elseif self.mode == CRAFT then
-		crafty:CRAFT_SHOW()
-	end
 end
 
 function crafty:CRAFT_SHOW()
@@ -233,16 +226,11 @@ function crafty:CRAFT_SHOW()
 	-- first time window has been opened
 	if not self.frames.craft.orig_update then
 		self.frames.craft.orig_update = CraftFrame_Update
-		CraftFrame_Update = function()
-			self.frames.craft.orig_update()
-			self:Update()
-		end
+		CraftFrame_Update = function() self:Update() end
 	end
 	
-	-- Have to set our current frame for the widgets that load.
 	self.currentFrame = self.frames.craft
 	
-	-- Is the tradeskill window open? If so we'll need to close it.
 	if getglobal(self.frames.trade.elements.Main) and getglobal(self.frames.trade.elements.Main):IsShown() then
 		getglobal(self.frames.trade.elements.Main):Hide()
 	end
@@ -251,7 +239,7 @@ function crafty:CRAFT_SHOW()
 	self.frame:SetPoint('TOPRIGHT', self.frames.craft.anchor, 'BOTTOMRIGHT', self.frames.craft.anchor_offset_x, self.frames.craft.anchor_offset_y)
 
 	self.frame:Show()
-	self:Update()
+	self:Search()
 end
 
 function crafty:TRADE_SKILL_SHOW()
@@ -260,16 +248,11 @@ function crafty:TRADE_SKILL_SHOW()
 	-- first time window has been opened
 	if not self.frames.trade.orig_update then
 		self.frames.trade.orig_update = TradeSkillFrame_Update
-		TradeSkillFrame_Update = function()
-			self.frames.trade.orig_update()
-			self:Update()
-		end
+		TradeSkillFrame_Update = function() self:Update() end
 	end
 		
-	-- Have to set our current frame for the widgets that load.
 	self.currentFrame = self.frames.trade
 	
-	-- Is the crafting window open? If so we'll need to close it.
 	if getglobal(self.frames.craft.elements.Main) and getglobal(self.frames.craft.elements.Main):IsShown() then
 		getglobal(self.frames.craft.elements.Main):Hide()
 	end
@@ -295,6 +278,12 @@ function crafty:OnClose()
 end
 
 function crafty:Update()
+	if self.mode == CRAFT then
+		self.frames.craft.orig_update()
+	elseif self.mode == TRADE then
+		self.frames.trade.orig_update()
+	end
+
 	local searchType = SEARCH_TYPES[self:GetSearchType()]
 
 	self.frame.SearchTypeButton:SetText(searchType)
@@ -311,24 +300,16 @@ function crafty:Update()
 			getglobal(self.frames.trade.elements.CollapseAll):Disable();
 		end
 		
-		-- Update the scroll frame.
 		FauxScrollFrame_Update(getglobal(self.currentFrame.elements.Scroll), getn(self.found), (self.mode == CRAFT and CRAFTS_DISPLAYED or TRADE_SKILLS_DISPLAYED), (self.mode == CRAFT and CRAFT_SKILL_HEIGHT or TRADE_SKILL_HEIGHT), nil, nil, nil, getglobal(self.currentFrame.elements.Highlight), 293, 316 )
 		getglobal(self.currentFrame.elements.Highlight):Hide()
 		
 		if getn(self.found) > 0 then
-			if self.mode == CRAFT then
-				CraftFrame_SetSelection(self.found[1].index)
-			else
-				TradeSkillFrame_SetSelection(self.found[1].index)
-			end
 					
-			-- Do the actual display of the list now.
 			for i=1,self.mode == CRAFT and CRAFTS_DISPLAYED or TRADE_SKILLS_DISPLAYED do
 				local skillIndex = i + skillOffset
 				skillButton = getglobal((self.mode == CRAFT and 'Craft' or 'TradeSkillSkill')..i)
 				
 				if i <= getn(self.found) then
-					-- Set button widths if scrollbar is shown or hidden
 					if getglobal(self.currentFrame.elements.Scroll):IsVisible() then
 						skillButton:SetWidth(293)
 					else
@@ -354,7 +335,6 @@ function crafty:Update()
 						skillButton:SetText(' '.. self.found[skillIndex].name ..' ['.. self.found[skillIndex].available ..']')
 					end
 					
-					-- Place the highlight and lock the highlight state
 					if (self.mode == CRAFT and GetCraftSelectionIndex() or GetTradeSkillSelectionIndex()) == self.found[skillIndex].index then
 						getglobal(self.currentFrame.elements.Highlight):SetPoint('TOPLEFT', skillButton, 'TOPLEFT', 0, 0)
 						getglobal(self.currentFrame.elements.Highlight):Show()
@@ -364,8 +344,6 @@ function crafty:Update()
 							getglobal(self.currentFrame.elements.Main).numAvailable = self.found[skillIndex].available
 						end
 					else
-						-- The highlight is shown, but it's on an entry that we haven't selected. Probably a remnant from a selection before we did our search,
-						-- so we'll go ahead and hide the frame.
 						if not self:SelectionInList(skillOffset) then
 							getglobal(self.currentFrame.elements.Highlight):Hide()
 						end
@@ -379,28 +357,8 @@ function crafty:Update()
 			getglobal(self.currentFrame.elements.Scroll):Hide()
 			for i=1,self.mode == CRAFT and CRAFTS_DISPLAYED or TRADE_SKILLS_DISPLAYED do
 				skillButton = getglobal((self.mode == CRAFT and 'Craft' or 'TradeSkillSkill')..i)
-				
-				skillButton:SetWidth(323)
-				skillButton:SetTextColor(1, 1, 1)
-				skillButton:SetID(1)
-				skillButton:SetNormalTexture('')
-				getglobal((self.mode == CRAFT and 'Craft' or 'TradeSkillSkill')..i..'Highlight'):Hide()
-				skillButton:UnlockHighlight();
-				skillButton:Show()
-				
-				if i == 1 then
-					getglobal(self.currentFrame.elements.Highlight):Hide()
-					skillButton:SetText('No results matched your search.')
-				else 
-					skillButton:SetText('')
-				end
+				skillButton:Hide()
 			end
-		end
-	else
-		if self.mode == CRAFT then
-			self.frames.craft.orig_update()
-		elseif self.mode == TRADE then
-			self.frames.trade.orig_update()
 		end
 	end
 end
@@ -412,6 +370,14 @@ function crafty:Search()
 	getglobal(self.currentFrame.elements.ScrollBar):SetValue(0)
 
 	self:Update()
+	if getn(self.found) > 0 then
+		if self.mode == CRAFT then
+			CraftFrame_SetSelection(self.found[1].index)
+		elseif self.mode == TRADE then
+			TradeSkillFrame_SetSelection(self.found[1].index)
+		end
+		self:Update()
+	end
 end
 
 function crafty:Reset()
@@ -485,6 +451,10 @@ end
 function crafty:SendReagentsMessage(channel, who)
 
 	local index = self.mode == CRAFT and GetCraftSelectionIndex() or GetTradeSkillSelectionIndex()
+
+	if index == 0 then
+		return
+	end
 
 	local message = {}
 
