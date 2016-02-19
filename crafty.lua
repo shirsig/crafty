@@ -5,6 +5,8 @@ crafty:SetScript('OnEvent', function()
 end)
 crafty:RegisterEvent('ADDON_LOADED')
 
+local TRADE, CRAFT = 1, 2
+
 local SEARCH_TYPES = {
 	'Name',
 	'Reagent',
@@ -14,18 +16,13 @@ local SEARCH_TYPES = {
 local LINK_TYPES = {
 	{'Guild', 'GUILD', nil},
 	{'Party', 'PARTY', nil}, 
-	{'Say', 'SAY', nil, },
+	{'Say', 'SAY', nil},
 	{'Whisper', 'WHISPER', 'Type the name of the player you would like to send the reagent/material information to.'},
 	{'Channel', 'CHANNEL', 'Type in which channel number you would like to post the information to.  Note: _NOT_ the channel name. So if trade is /2, type simply: 2'},
 }
 
 -- Dewdrop: handles our dropdown
 local dewdrop =  AceLibrary('Dewdrop-2.0')
-
--- Our container for all frames.
-local frames = {}
-
-local TRADE, CRAFT = 1, 2
 
 function crafty:loadState()
 	self.state = self.state or {}
@@ -58,35 +55,40 @@ function crafty:ADDON_LOADED()
 		return
 	end
 
-	frames.trade = {
-		elements = {
-			Main = 'TradeSkillFrame',
-			Title = 'TradeSkillFrameTitleText',
-			Scroll = 'TradeSkillListScrollFrame',
-			ScrollBar = 'TradeSkillListScrollFrameScrollBar',
-			Highlight = 'TradeSkillHighlightFrame',
-			CollapseAll = 'TradeSkillCollapseAllButton',
+	self.frames = {
+		trade = {
+			elements = {
+				Main = 'TradeSkillFrame',
+				Title = 'TradeSkillFrameTitleText',
+				Scroll = 'TradeSkillListScrollFrame',
+				ScrollBar = 'TradeSkillListScrollFrameScrollBar',
+				Highlight = 'TradeSkillHighlightFrame',
+				CollapseAll = 'TradeSkillCollapseAllButton',
+			},
+			anchor = 'TradeSkillCreateAllButton',
+			anchor_offset_x = -9,
+			anchor_offset_y = -8,
 		},
-		anchor = 'TradeSkillCreateAllButton',
-		anchor_offset_x = -9,
-		anchor_offset_y = -8,
+		craft = {
+			elements = {
+				Main = 'CraftFrame',
+				Title = 'CraftFrameTitleText',
+				Scroll = 'CraftListScrollFrame',
+				ScrollBar = 'CraftListScrollFrameScrollBar',
+				Highlight = 'CraftHighlightFrame',
+			},
+			anchor = 'CraftCancelButton',
+			anchor_offset_x = 6,
+			anchor_offset_y = -8,
+		},
 	}
 
-	frames.craft = {
-		elements = {
-			Main = 'CraftFrame',
-			Title = 'CraftFrameTitleText',
-			Scroll = 'CraftListScrollFrame',
-			ScrollBar = 'CraftListScrollFrameScrollBar',
-			Highlight = 'CraftHighlightFrame',
-		},
-		anchor = 'CraftCancelButton',
-		anchor_offset_x = 6,
-		anchor_offset_y = -8,
-	}
+	self.found = {}
 
 	self:RegisterEvent('TRADE_SKILL_SHOW')
+	self:RegisterEvent('TRADE_SKILL_CLOSE')
 	self:RegisterEvent('CRAFT_SHOW')
+	self:RegisterEvent('CRAFT_CLOSE')
 	
 	if not self.frame then
 		-- Create main frame 
@@ -107,7 +109,6 @@ function crafty:ADDON_LOADED()
 		})
 		self.frame:SetBackdropColor(1, 1, 1, 1)
 		self.frame:SetBackdropBorderColor(0, .8, 0, 1)
-		self.frame:SetScript('OnShow', function() self:OnShow() end)
 		
 		-- Create sub-frames
 		-- Editbox for search text
@@ -219,50 +220,34 @@ function crafty:ADDON_LOADED()
 	end
 	
 	-- If the mod was disabled when WoW loaded, then the main frame will not be visible. So we'll make it visible again.
-	if getglobal(frames.trade.elements.Main) and getglobal(frames.trade.elements.Main):IsShown() then
+	if self.mode == TRADE then
 		crafty:TRADE_SKILL_SHOW()
-	elseif getglobal(frames.craft.elements.Main) and getglobal(frames.craft.elements.Main):IsShown() then
+	elseif self.mode == CRAFT then
 		crafty:CRAFT_SHOW()
 	end
-end
-
--- function crafty:OnDisable()
--- 	if self.frame then
--- 		self.frame:Hide()
--- 	end
--- end
-
-function crafty:OnShow()
-	self:Update()
 end
 
 function crafty:CRAFT_SHOW()
 	self.mode = CRAFT
 
 	-- first time window has been opened
-	if not frames.craft.orig_update then
-		self:RegisterEvent('CRAFT_CLOSE')
-		frames.craft.orig_update = CraftFrame_Update
+	if not self.frames.craft.orig_update then
+		self.frames.craft.orig_update = CraftFrame_Update
 		CraftFrame_Update = function() self:Update() end
 	end
 	
 	-- Have to set our current frame for the widgets that load.
-	self.currentFrame = frames.craft
+	self.currentFrame = self.frames.craft
 	
 	-- Is the tradeskill window open? If so we'll need to close it.
-	if getglobal(frames.trade.elements.Main) and getglobal(frames.trade.elements.Main):IsShown() then
-		getglobal(frames.trade.elements.Main):Hide()
+	if getglobal(self.frames.trade.elements.Main) and getglobal(self.frames.trade.elements.Main):IsShown() then
+		getglobal(self.frames.trade.elements.Main):Hide()
 	end
 	
 	self.frame:ClearAllPoints()
-	self.frame:SetPoint('TOPRIGHT', frames.craft.anchor, 'BOTTOMRIGHT', frames.craft.anchor_offset_x, frames.craft.anchor_offset_y)
+	self.frame:SetPoint('TOPRIGHT', self.frames.craft.anchor, 'BOTTOMRIGHT', self.frames.craft.anchor_offset_x, self.frames.craft.anchor_offset_y)
 
-	if self.frame:IsShown() then
-		self:OnShow()
-	else
-		self.frame:Show()
-	end
-
+	self.frame:Show()
 	self:Update()
 end
 
@@ -270,29 +255,23 @@ function crafty:TRADE_SKILL_SHOW()
 	self.mode = TRADE
 
 	-- first time window has been opened
-	if not frames.trade.orig_update then
-		self:RegisterEvent('TRADE_SKILL_CLOSE')
-		frames.trade.orig_update = TradeSkillFrame_Update
+	if not self.frames.trade.orig_update then
+		self.frames.trade.orig_update = TradeSkillFrame_Update
 		TradeSkillFrame_Update = function() self:Update() end
 	end
 		
 	-- Have to set our current frame for the widgets that load.
-	self.currentFrame = frames.trade
+	self.currentFrame = self.frames.trade
 	
 	-- Is the crafting window open? If so we'll need to close it.
-	if getglobal(frames.craft.elements.Main) and getglobal(frames.craft.elements.Main):IsShown() then
-		getglobal(frames.craft.elements.Main):Hide()
+	if getglobal(self.frames.craft.elements.Main) and getglobal(self.frames.craft.elements.Main):IsShown() then
+		getglobal(self.frames.craft.elements.Main):Hide()
 	end
 	
 	self.frame:ClearAllPoints()
-	self.frame:SetPoint('TOPLEFT', frames.trade.anchor, 'BOTTOMLEFT', frames.trade.anchor_offset_x, frames.trade.anchor_offset_y)
+	self.frame:SetPoint('TOPLEFT', self.frames.trade.anchor, 'BOTTOMLEFT', self.frames.trade.anchor_offset_x, self.frames.trade.anchor_offset_y)
 
-	if self.frame:IsShown() then
-		self:OnShow()
-	else
-		self.frame:Show()
-	end
-	
+	self.frame:Show()
 	self:Update()
 end
 
@@ -323,7 +302,7 @@ function crafty:Update()
 		self:BuildList(self:GetSearchText(), searchType)
 						
 		if self.mode == TRADE then
-			getglobal(frames.trade.elements.CollapseAll):Disable();
+			getglobal(self.frames.trade.elements.CollapseAll):Disable();
 		end
 		
 		-- Update the scroll frame.
@@ -331,6 +310,11 @@ function crafty:Update()
 		getglobal(self.currentFrame.elements.Highlight):Hide()
 		
 		if getn(self.found) > 0 then
+			if self.mode == CRAFT then
+				CraftFrame_SetSelection(self.found[1].index)
+			else
+				TradeSkillFrame_SetSelection(self.found[1].index)
+			end
 					
 			-- Do the actual display of the list now.
 			for i=1,self.mode == CRAFT and CRAFTS_DISPLAYED or TRADE_SKILLS_DISPLAYED do
@@ -370,7 +354,7 @@ function crafty:Update()
 						getglobal(self.currentFrame.elements.Highlight):Show()
 						skillButton:LockHighlight()
 						-- Setting the num avail so the create all button works for tradeskills
-						if self.mode == TRADE and getglobal(frames.trade.elements.Main) then
+						if self.mode == TRADE and getglobal(self.frames.trade.elements.Main) then
 							getglobal(self.currentFrame.elements.Main).numAvailable = self.found[skillIndex].available
 						end
 					else
@@ -408,30 +392,20 @@ function crafty:Update()
 		end
 	else
 		if self.mode == CRAFT then
-			frames.craft.orig_update()
+			self.frames.craft.orig_update()
 		elseif self.mode == TRADE then
-			frames.trade.orig_update()
+			self.frames.trade.orig_update()
 		end
 	end
 end
 
 function crafty:Search()
 	self:SetSearchText(self.frame.SearchBox:GetText())
-
-	self.found = {}
 	
 	FauxScrollFrame_SetOffset(getglobal(self.currentFrame.elements.Main), 0)
 	getglobal(self.currentFrame.elements.ScrollBar):SetValue(0)
 
 	self:Update()
-	if getn(self.found) > 0 then
-		if self.mode == CRAFT then
-			CraftFrame_SetSelection(self.found[1].index)
-		else
-			TradeSkillFrame_SetSelection(self.found[1].index)
-		end
-		self:Update()
-	end
 end
 
 function crafty:Reset()
@@ -453,7 +427,7 @@ end
 function crafty:BuildList(searchText, searchType)
 	self.found = {}
 
-	local matcher = self:fuzzy(searchText)
+	local matcher = self:fuzzy_matcher(searchText)
 	
 	for i=1,self.mode == CRAFT and GetNumCrafts() or GetNumTradeSkills() do
 		local skillName, skillType, numAvailable, isExpanded, requires
@@ -503,16 +477,15 @@ function crafty:BuildList(searchText, searchType)
 end
 
 function crafty:SendReagentsMessage(channel, who)
-	local craft = getglobal(frames.craft.elements.Main) and getglobal(frames.craft.elements.Main):IsShown()
 
-	local index = craft and GetCraftSelectionIndex() or GetTradeSkillSelectionIndex()
+	local index = self.mode == CRAFT and GetCraftSelectionIndex() or GetTradeSkillSelectionIndex()
 
 	local message = {}
 
-	local message_part = (craft and GetCraftItemLink(index) or GetTradeSkillItemLink(index))..' ='
-	for i=1,craft and GetCraftNumReagents(index) or GetTradeSkillNumReagents(index) do
-		local reagent_link = craft and GetCraftReagentItemLink(index, i) or GetTradeSkillReagentItemLink(index, i)
-		local reagent_count = (craft and { GetCraftReagentInfo(index, i) } or { GetTradeSkillReagentInfo(index, i) })[3]
+	local message_part = (self.mode == CRAFT and GetCraftItemLink(index) or GetTradeSkillItemLink(index))..' ='
+	for i=1,self.mode == CRAFT and GetCraftNumReagents(index) or GetTradeSkillNumReagents(index) do
+		local reagent_link = self.mode == CRAFT and GetCraftReagentItemLink(index, i) or GetTradeSkillReagentItemLink(index, i)
+		local reagent_count = (self.mode == CRAFT and { GetCraftReagentInfo(index, i) } or { GetTradeSkillReagentInfo(index, i) })[3]
 
 		local reagent_info = format(
 			'%s x %i',
@@ -532,7 +505,7 @@ function crafty:SendReagentsMessage(channel, who)
 	end
 end
 
-function crafty:fuzzy(input)
+function crafty:fuzzy_matcher(input)
 	local uppercase_input = strupper(input)
 	local pattern = '(.*)'
 	for i=1,strlen(uppercase_input) do
