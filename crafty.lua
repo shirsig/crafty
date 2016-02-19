@@ -284,6 +284,9 @@ function crafty:Update()
 
 	self.frame.SearchTypeButton:SetText(searchType)
 	self.frame.SearchBox:SetText(self:GetSearchText())
+
+	-- may be disabled from the no results message
+	getglobal((self.mode == CRAFT and 'Craft' or 'TradeSkillSkill')..1):Enable()
 	
 	if self:GetSearchText() ~= '' and getglobal(self.currentFrame.elements.Main):IsShown() then
 
@@ -294,6 +297,9 @@ function crafty:Update()
 						
 		if self.mode == TRADE then
 			getglobal(self.frames.trade.elements.CollapseAll):Disable();
+			for i=1, TRADE_SKILLS_DISPLAYED, 1 do
+				getglobal('TradeSkillSkill'..i..'Text'):SetPoint('TOPLEFT', 'TradeSkillSkill'..i, 'TOPLEFT', 3, 0)
+			end
 		end
 		
 		FauxScrollFrame_Update(getglobal(self.currentFrame.elements.Scroll), getn(self.found), (self.mode == CRAFT and CRAFTS_DISPLAYED or TRADE_SKILLS_DISPLAYED), (self.mode == CRAFT and CRAFT_SKILL_HEIGHT or TRADE_SKILL_HEIGHT), nil, nil, nil, getglobal(self.currentFrame.elements.Highlight), 293, 316 )
@@ -353,13 +359,28 @@ function crafty:Update()
 			getglobal(self.currentFrame.elements.Scroll):Hide()
 			for i=1,self.mode == CRAFT and CRAFTS_DISPLAYED or TRADE_SKILLS_DISPLAYED do
 				skillButton = getglobal((self.mode == CRAFT and 'Craft' or 'TradeSkillSkill')..i)
-				skillButton:Hide()
+				if i == 1 then
+					skillButton:Disable()
+					skillButton:SetWidth(323)
+					skillButton:SetDisabledTextColor(1, 1, 1)
+					skillButton:SetDisabledTexture('')
+					skillButton:SetText('No results matched your search.')
+					skillButton:UnlockHighlight()
+					skillButton:Show()
+				else
+					skillButton:Hide()
+				end
 			end
 		end
 	else
 		if self.mode == CRAFT then
 			self.frames.craft.orig_update()
 		elseif self.mode == TRADE then
+			if self.mode == TRADE then
+				for i=1, TRADE_SKILLS_DISPLAYED, 1 do
+					getglobal('TradeSkillSkill'..i..'Text'):SetPoint('TOPLEFT', 'TradeSkillSkill'..i, 'TOPLEFT', 21, 0)
+				end
+			end
 			self.frames.trade.orig_update()
 		end
 	end
