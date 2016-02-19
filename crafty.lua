@@ -233,7 +233,10 @@ function crafty:CRAFT_SHOW()
 	-- first time window has been opened
 	if not self.frames.craft.orig_update then
 		self.frames.craft.orig_update = CraftFrame_Update
-		CraftFrame_Update = function() self:Update() end
+		CraftFrame_Update = function()
+			self.frames.craft.orig_update()
+			self:Update()
+		end
 	end
 	
 	-- Have to set our current frame for the widgets that load.
@@ -257,7 +260,10 @@ function crafty:TRADE_SKILL_SHOW()
 	-- first time window has been opened
 	if not self.frames.trade.orig_update then
 		self.frames.trade.orig_update = TradeSkillFrame_Update
-		TradeSkillFrame_Update = function() self:Update() end
+		TradeSkillFrame_Update = function()
+			self.frames.trade.orig_update()
+			self:Update()
+		end
 	end
 		
 	-- Have to set our current frame for the widgets that load.
