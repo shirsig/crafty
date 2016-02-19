@@ -26,7 +26,14 @@ local dewdrop =  AceLibrary('Dewdrop-2.0')
 
 function crafty:loadState()
 	self.state = self.state or {}
-	local profession = GetTradeSkillLine()
+
+	local profession
+	if self.mode == TRADE then
+		profession = GetTradeSkillLine()
+	elseif self.mode == CRAFT then
+		profession = GetCraftSkillLine(1)
+	end
+
 	self.state[profession] = self.state[profession] or {
 		searchText = '',
 		searchType = 1,
@@ -219,6 +226,10 @@ function crafty:ADDON_LOADED()
 end
 
 function crafty:CRAFT_SHOW()
+	if GetCraftSkillLine(1) ~= 'Enchanting' then
+		return
+	end
+
 	self.mode = CRAFT
 
 	-- first time window has been opened
