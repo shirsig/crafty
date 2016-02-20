@@ -27,7 +27,7 @@ local dewdrop =  AceLibrary('Dewdrop-2.0')
 function crafty:loadState()
 	self.state = self.state or {}
 
-	local profession
+	local profession = ''
 	if self.mode == TRADE then
 		profession = GetTradeSkillLine()
 	elseif self.mode == CRAFT then
