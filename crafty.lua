@@ -238,6 +238,7 @@ function crafty:CRAFT_SHOW()
 		self.frames.craft.orig_update = CraftFrame_Update
 		CraftFrame_Update = function() self:Update() end
 	end
+	self.frames.craft.orig_update()
 	
 	self.currentFrame = self.frames.craft
 	
