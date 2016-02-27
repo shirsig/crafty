@@ -27,12 +27,13 @@ local dewdrop =  AceLibrary('Dewdrop-2.0')
 function crafty:loadState()
 	self.state = self.state or {}
 
-	local profession = ''
+	local profession
 	if self.mode == TRADE then
 		profession = GetTradeSkillLine()
 	elseif self.mode == CRAFT then
 		profession = GetCraftSkillLine(1)
 	end
+	profession = profession or '' -- TODO better solution
 
 	self.state[profession] = self.state[profession] or {
 		searchText = '',
@@ -263,6 +264,7 @@ function crafty:TRADE_SKILL_SHOW()
 		self.frames.trade.orig_update = TradeSkillFrame_Update
 		TradeSkillFrame_Update = function() self:Update() end
 	end
+	self.frames.trade.orig_update()
 		
 	self.currentFrame = self.frames.trade
 	
