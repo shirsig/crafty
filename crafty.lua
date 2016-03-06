@@ -104,7 +104,6 @@ function crafty:ADDON_LOADED()
 		self.frame:SetPoint('CENTER', 'UIParent', 'CENTER', 0, 0)
 		self.frame:SetWidth(342)  
 		self.frame:SetHeight(45)
-		self.frame:SetToplevel(true)
 		self.frame:SetFrameStrata('MEDIUM')
 		self.frame:SetMovable(false)
 		self.frame:EnableMouse(true)
@@ -219,6 +218,13 @@ function crafty:ADDON_LOADED()
 	end
 end
 
+function crafty:relevel(frame)
+	for _, child in { frame:GetChildren() } do
+		child:SetFrameLevel(frame:GetFrameLevel() + 1)
+		self:relevel(child)
+	end
+end
+
 function crafty:CRAFT_SHOW()
 	if GetCraftSkillLine(1) ~= 'Enchanting' then
 		return
@@ -240,6 +246,8 @@ function crafty:CRAFT_SHOW()
 		getglobal(self.frames.trade.elements.Main):Hide()
 	end
 	
+	self.frame:SetParent(self.frames.craft.elements.Main)
+	self:relevel(self.frame)
 	self.frame:ClearAllPoints()
 	self.frame:SetPoint('TOPRIGHT', self.frames.craft.anchor, 'BOTTOMRIGHT', self.frames.craft.anchor_offset_x, self.frames.craft.anchor_offset_y)
 
@@ -265,6 +273,8 @@ function crafty:TRADE_SKILL_SHOW()
 		getglobal(self.frames.craft.elements.Main):Hide()
 	end
 	
+	self.frame:SetParent(self.frames.trade.elements.Main)
+	self:relevel(self.frame)
 	self.frame:ClearAllPoints()
 	self.frame:SetPoint('TOPLEFT', self.frames.trade.anchor, 'BOTTOMLEFT', self.frames.trade.anchor_offset_x, self.frames.trade.anchor_offset_y)
 
