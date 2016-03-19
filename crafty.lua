@@ -7,16 +7,28 @@ crafty:RegisterEvent('ADDON_LOADED')
 
 do
 	local function action()
-	    local input = getglobal(this:GetParent():GetName()..'EditBox'):GetText()
+	    local input = strlower(getglobal(this:GetParent():GetName()..'EditBox'):GetText())
 	    if tonumber(input) then
 	    	crafty:SendReagentsMessage('CHANNEL', input)
-		elseif strlower(input) == 'g' then
+		elseif input == 'guild' or input == 'g' then
 			crafty:SendReagentsMessage('GUILD')
-		elseif strlower(input) == 'p' then
+		elseif input == 'o' then
+			crafty:SendReagentsMessage('OFFICER')
+		elseif input == 'raid' or input == 'ra' then
+			crafty:SendReagentsMessage('RAID')
+		elseif input == 'rw' then
+			crafty:SendReagentsMessage('RAID_WARNING')
+		elseif input == 'bg' then
+			crafty:SendReagentsMessage('BATTLEGROUND')
+		elseif input == 'party' or input == 'p' then
 			crafty:SendReagentsMessage('PARTY')
-		elseif strlower(input) == 's' then
-			crafty:SendReagentsMessage('SAY')		
-		elseif strlower(input) == 'r' then
+		elseif input == 'say' or input == 's' then
+			crafty:SendReagentsMessage('SAY')
+		elseif input == 'yell' or input == 'y' then
+			crafty:SendReagentsMessage('YELL')	
+		elseif input == 'emote' or input == 'em' then
+			crafty:SendReagentsMessage('EMOTE')	
+		elseif input == 'reply' or input == 'r' then
 			if ChatEdit_GetLastTellTarget(ChatFrameEditBox) ~= '' then
 				crafty:SendReagentsMessage('WHISPER', ChatEdit_GetLastTellTarget(ChatFrameEditBox))
 			end
