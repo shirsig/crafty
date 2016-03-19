@@ -5,6 +5,47 @@ crafty:SetScript('OnEvent', function()
 end)
 crafty:RegisterEvent('ADDON_LOADED')
 
+do
+	local function action()
+	    local input = getglobal(this:GetParent():GetName()..'EditBox'):GetText()
+	    if tonumber(input) then
+	    	crafty:SendReagentsMessage('CHANNEL', input)
+		elseif strlower(input) == 'g' then
+			crafty:SendReagentsMessage('GUILD')
+		elseif strlower(input) == 'p' then
+			crafty:SendReagentsMessage('PARTY')
+		elseif strlower(input) == 's' then
+			crafty:SendReagentsMessage('SAY')		
+		elseif strlower(input) == 'r' then
+			if ChatEdit_GetLastTellTarget(ChatFrameEditBox) ~= '' then
+				crafty:SendReagentsMessage('WHISPER', ChatEdit_GetLastTellTarget(ChatFrameEditBox))
+			end
+		elseif strlen(input) > 1 then
+			crafty:SendReagentsMessage('WHISPER', input)
+		end
+	end
+
+	StaticPopupDialogs['CRAFTY_LINK'] = {
+	    text = 'Enter a character name or channel.',
+	    button1 = 'Link',
+	    button2 = 'Cancel',
+	    hasEditBox = 1,
+	    OnShow = function()
+			getglobal(this:GetName()..'EditBox'):SetText('')
+		end,
+	    OnAccept = action,
+	    EditBoxOnEnterPressed = function()
+	    	action()
+			this:GetParent():Hide()
+		end,
+		EditBoxOnEscapePressed = function()
+			this:GetParent():Hide()
+		end,
+	    timeout = 0,
+	    hideOnEscape = 1,
+	}
+end
+
 local TRADE, CRAFT = 1, 2
 
 local SEARCH_TYPES = {
@@ -12,17 +53,6 @@ local SEARCH_TYPES = {
 	'Reagent',
 	'Requires',
 }
-
-local LINK_TYPES = {
-	{'Guild', 'GUILD', nil},
-	{'Party', 'PARTY', nil}, 
-	{'Say', 'SAY', nil},
-	{'Whisper', 'WHISPER', 'Type the name of the player you would like to send the reagent/material information to.'},
-	{'Channel', 'CHANNEL', 'Type in which channel number you would like to post the information to.  Note: _NOT_ the channel name. So if trade is /2, type simply: 2'},
-}
-
--- Dewdrop: handles our dropdown
-local dewdrop =  AceLibrary('Dewdrop-2.0')
 
 function crafty:loadState()
 	self.state = self.state or {}
@@ -156,61 +186,16 @@ function crafty:ADDON_LOADED()
 		self.frame.LinkReagentButton:SetText('Link')
 		self.frame.LinkReagentButton:RegisterForClicks('LeftButtonUp', 'RightButtonUp')
 		self.frame.LinkReagentButton:SetScript('OnClick', function() 
-				if dewdrop:IsOpen(self.frame.LinkReagentButton) then 
-					dewdrop:Close()	
+				if StaticPopup_Visible('CRAFTY_LINK') then 
+					StaticPopup_Hide('CRAFTY_LINK')
 				elseif arg1 == 'RightButton' then
-					dewdrop:Open(self.frame.LinkReagentButton) 
+					StaticPopup_Show('CRAFTY_LINK') 
 				end
 
 				if arg1 == 'LeftButton' then
-					local target = ChatEdit_GetLastTellTarget(ChatFrameEditBox) ~= '' and ChatEdit_GetLastTellTarget(ChatFrameEditBox)
 					local channel = GetNumPartyMembers() == 0 and 'WHISPER' or 'PARTY'
-					if channel == 'PARTY' or target then
-						crafty:SendReagentsMessage(channel, target)
-					end
-				end
-			end
-		)
-		
-		-- Create the LinkReagents dropdown menu
-		dewdrop:Register(self.frame.LinkReagentButton,
-			'point', function(parent)
-				return 'TOPLEFT', 'BOTTOMLEFT'
-			end,
-			'dontHook', true,
-			'children', function()
-				dewdrop:AddLine(
-					'text', 'To which channel:',
-					'isTitle', true
-				)
-				for i,channel in LINK_TYPES do
-					-- There are two types lines: 
-					-- 1. Those that are straightforward and do not require user input
-					-- 2. Those that require the user to input information to take it a step further.
-					-- channel[1] is the "common name"
-					-- channel[2] is the "channel"
-					-- channel[3] is the "desc"
-					if channel[2] ~= 'WHISPER' and channel[2] ~= 'CHANNEL' then
-						dewdrop:AddLine(
-							'text', channel[1],
-							'func', function(val)
-								self:SendReagentsMessage(val, nil)
-							end,
-							'arg1', channel[2],
-							'closeWhenClicked', true
-						)
-					else
-						dewdrop:AddLine(
-							'text', channel[1],
-							'hasArrow', true,
-							'hasEditBox', true,
-							'tooltipTitle', channel[1],
-							'tooltipText', channel[3],
-							'editBoxFunc', function(channel, text)
-								self:SendReagentsMessage(channel, text)
-							end,
-							'editBoxArg1', channel[2]
-						)
+					if channel == 'PARTY' or ChatEdit_GetLastTellTarget(ChatFrameEditBox) ~= '' then
+						crafty:SendReagentsMessage(channel, ChatEdit_GetLastTellTarget(ChatFrameEditBox))
 					end
 				end
 			end
@@ -293,7 +278,7 @@ end
 
 function crafty:OnClose()
 	self.frame:Hide()
-	dewdrop:Close()	
+	StaticPopup_Hide('CRAFTY_LINK')
 end
 
 function crafty:Update()
