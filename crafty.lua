@@ -1,9 +1,18 @@
-
 local crafty = CreateFrame('Frame', nil, UIParent)
 crafty:SetScript('OnEvent', function()
 	this[event](this)
 end)
 crafty:RegisterEvent('ADDON_LOADED')
+
+local TRADE, CRAFT = 1, 2
+
+local SEARCH_TYPES = {
+	'Name',
+	'Reagent',
+	'Requires',
+}
+
+local channel_player_names = {}
 
 do
 	local function action()
@@ -43,8 +52,9 @@ do
 	    button2 = 'Cancel',
 	    hasEditBox = 1,
 	    OnShow = function()
-			getglobal(this:GetName()..'EditBox'):SetText('')
-			getglobal(this:GetName()..'EditBox'):SetFocus()
+	    	local editBox = getglobal(this:GetName()..'EditBox')
+			editBox:SetText('')
+			editBox:SetFocus()
 		end,
 	    OnAccept = action,
 	    EditBoxOnEnterPressed = function()
@@ -59,13 +69,12 @@ do
 	}
 end
 
-local TRADE, CRAFT = 1, 2
-
-local SEARCH_TYPES = {
-	'Name',
-	'Reagent',
-	'Requires',
-}
+function crafty:CHAT_MSG_CHANNEL()
+	tinsert(channel_player_names, 1, arg2)
+	while getn(channel_player_names) > 20 do
+		tremove(channel_player_names)
+	end
+end
 
 function crafty:loadState()
 	self.state = self.state or {}
@@ -138,7 +147,19 @@ function crafty:ADDON_LOADED()
 
 	self:RegisterEvent('TRADE_SKILL_SHOW')
 	self:RegisterEvent('CRAFT_SHOW')
+	self:RegisterEvent('CHAT_MSG_CHANNEL')
 	
+	local origSetItemRef = SetItemRef
+	SetItemRef = function(...)
+		local popup = StaticPopup_FindVisible('CRAFTY_LINK')
+	    local _, _, player_name = strfind(unpack(arg), 'player:(.+)')
+	    if popup and IsShiftKeyDown() and player_name then
+	    	getglobal(popup:GetName()..'EditBox'):SetText(player_name)
+	    	return
+	    end
+	    return origSetItemRef(unpack(arg))
+	end
+
 	if not self.frame then
 		-- Create main frame 
 		self.frame = CreateFrame('Frame', 'craftyFrame', UIParent)
