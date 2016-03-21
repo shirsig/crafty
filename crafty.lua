@@ -44,6 +44,7 @@ do
 	    hasEditBox = 1,
 	    OnShow = function()
 			getglobal(this:GetName()..'EditBox'):SetText('')
+			getglobal(this:GetName()..'EditBox'):SetFocus()
 		end,
 	    OnAccept = action,
 	    EditBoxOnEnterPressed = function()
