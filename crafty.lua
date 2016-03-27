@@ -12,8 +12,6 @@ local SEARCH_TYPES = {
 	'Requires',
 }
 
-local channel_player_names = {}
-
 do
 	local function action()
 	    local input = strlower(getglobal(this:GetParent():GetName()..'EditBox'):GetText())
@@ -67,13 +65,6 @@ do
 	    timeout = 0,
 	    hideOnEscape = 1,
 	}
-end
-
-function crafty:CHAT_MSG_CHANNEL()
-	tinsert(channel_player_names, 1, arg2)
-	while getn(channel_player_names) > 20 do
-		tremove(channel_player_names)
-	end
 end
 
 function crafty:loadState()
@@ -147,7 +138,6 @@ function crafty:ADDON_LOADED()
 
 	self:RegisterEvent('TRADE_SKILL_SHOW')
 	self:RegisterEvent('CRAFT_SHOW')
-	self:RegisterEvent('CHAT_MSG_CHANNEL')
 	
 	local origSetItemRef = SetItemRef
 	SetItemRef = function(...)
@@ -184,39 +174,47 @@ function crafty:ADDON_LOADED()
 		-- Editbox for search text
 		self.frame.SearchBox = CreateFrame('EditBox', nil, self.frame, 'InputBoxTemplate')
 		self.frame.SearchBox:SetAutoFocus(false)
-		self.frame.SearchBox:SetWidth(138)
+		self.frame.SearchBox:SetWidth(100)
 		self.frame.SearchBox:SetHeight(20)
-		self.frame.SearchBox:SetPoint('LEFT', self.frame, 'LEFT', 20, 0)
+		self.frame.SearchBox:SetPoint('LEFT', self.frame, 'LEFT', 17, 0)
 		self.frame.SearchBox:SetBackdropColor(TOOLTIP_DEFAULT_COLOR.r, TOOLTIP_DEFAULT_COLOR.g, TOOLTIP_DEFAULT_COLOR.b)
 		self.frame.SearchBox:SetBackdropBorderColor(TOOLTIP_DEFAULT_BACKGROUND_COLOR.r, TOOLTIP_DEFAULT_BACKGROUND_COLOR.g, TOOLTIP_DEFAULT_BACKGROUND_COLOR.b)
 		self.frame.SearchBox:SetScript('OnTextChanged', function() self:Search() end)
 		self.frame.SearchBox:SetScript('OnEnterPressed', function()
 			this:ClearFocus()
 		end)
-		
-		-- Reset Button
-		self.frame.ResetButton = CreateFrame('Button', nil, self.frame, 'GameMenuButtonTemplate')
-		self.frame.ResetButton:SetWidth(20)
-		self.frame.ResetButton:SetHeight(25)
-		self.frame.ResetButton:SetPoint('RIGHT', self.frame, 'RIGHT', -15, 0)
-		self.frame.ResetButton:SetText('R')
-		self.frame.ResetButton:SetScript('OnClick', function() self:Reset() end)
 	
-		-- SearchType dropdown button to show the menu when clicked.
+		-- SearchType button
 		self.frame.SearchTypeButton = CreateFrame('Button', nil, self.frame, 'GameMenuButtonTemplate')
 		self.frame.SearchTypeButton:SetWidth(70)
 		self.frame.SearchTypeButton:SetHeight(25)
-		self.frame.SearchTypeButton:SetPoint('LEFT', self.frame.SearchBox, 'RIGHT', 8, 0)
+		self.frame.SearchTypeButton:SetPoint('LEFT', self.frame.SearchBox, 'RIGHT', 4, 0)
 		self.frame.SearchTypeButton:SetScript('OnClick', function()
 			self:SetSearchType(mod(self:GetSearchType(), 3) + 1)
 			self:Search()
-		end)	
+		end)
+
+		-- Available button
+		self.frame.AvailableOnlyButton = CreateFrame('Button', nil, self.frame, 'GameMenuButtonTemplate')
+		self.frame.AvailableOnlyButton:SetWidth(60)
+		self.frame.AvailableOnlyButton:SetHeight(25)
+		self.frame.AvailableOnlyButton:SetPoint('LEFT', self.frame.SearchTypeButton, 'RIGHT', 2, 0)
+		self.frame.AvailableOnlyButton:SetText('Avail.')
+		self.frame.AvailableOnlyButton:SetScript('OnClick', function()
+			self.availableOnly = not self.availableOnly
+			if self.availableOnly then
+				this:LockHighlight()
+			else
+				this:UnlockHighlight()
+			end
+			self:Search()
+		end)
 		
-		-- Link Reagents dropdown button to show the menu when clicked.
+		-- Link Reagents button
 		self.frame.LinkReagentButton = CreateFrame('Button', nil, self.frame, 'GameMenuButtonTemplate')
 		self.frame.LinkReagentButton:SetWidth(50)
 		self.frame.LinkReagentButton:SetHeight(25)
-		self.frame.LinkReagentButton:SetPoint('LEFT', self.frame.SearchTypeButton, 'RIGHT', 8, 0)
+		self.frame.LinkReagentButton:SetPoint('LEFT', self.frame.AvailableOnlyButton, 'RIGHT', 2, 0)
 		self.frame.LinkReagentButton:SetText('Link')
 		self.frame.LinkReagentButton:RegisterForClicks('LeftButtonUp', 'RightButtonUp')
 		self.frame.LinkReagentButton:SetScript('OnClick', function() 
@@ -234,6 +232,14 @@ function crafty:ADDON_LOADED()
 				end
 			end
 		)
+
+		-- Reset Button
+		self.frame.ResetButton = CreateFrame('Button', nil, self.frame, 'GameMenuButtonTemplate')
+		self.frame.ResetButton:SetWidth(20)
+		self.frame.ResetButton:SetHeight(25)
+		self.frame.ResetButton:SetPoint('RIGHT', self.frame, 'RIGHT', -12, 0)
+		self.frame.ResetButton:SetText('R')
+		self.frame.ResetButton:SetScript('OnClick', function() self:Reset() end)
 	end
 end
 
@@ -324,7 +330,7 @@ function crafty:Update()
 	-- may be disabled from the no results message
 	getglobal((self.mode == CRAFT and 'Craft' or 'TradeSkillSkill')..1):Enable()
 	
-	if self:GetSearchText() ~= '' and getglobal(self.currentFrame.elements.Main):IsShown() then
+	if (self:GetSearchText() ~= '' or self.availableOnly) and getglobal(self.currentFrame.elements.Main):IsShown() then
 
 		local skillOffset = FauxScrollFrame_GetOffset(getglobal(self.currentFrame.elements.Scroll))	
 		local skillButton
@@ -469,23 +475,26 @@ function crafty:BuildList(searchText, searchType)
 			skillName, skillType, numAvailable, isExpanded = GetTradeSkillInfo(i)
 			requires = GetTradeSkillTools(i)
 		end
-		
+
 		local rating
 
-		if searchType == 'Name' then
-			rating = matcher(skillName)
-		elseif searchType == 'Requires' then
-			rating = requires and matcher(BuildListString(requires))
-		elseif searchType == 'Reagent' then
-			for j=1,self.mode == CRAFT and GetCraftNumReagents(i) or GetTradeSkillNumReagents(i), 1 do
-				if self.mode == CRAFT then
-					reagentName, _, _, _ = GetCraftReagentInfo(i, j)
-				elseif self.mode == TRADE then
-					reagentName, _, _, _ = GetTradeSkillReagentInfo(i, j)
-				end
-				local reagent_rating = matcher(reagentName)
-				if reagent_rating then
-					rating = rating and rating + reagent_rating or reagent_rating
+		if not self.availableOnly or numAvailable > 1 then
+
+			if searchType == 'Name' then
+				rating = matcher(skillName)
+			elseif searchType == 'Requires' then
+				rating = requires and matcher(BuildListString(requires))
+			elseif searchType == 'Reagent' then
+				for j=1,self.mode == CRAFT and GetCraftNumReagents(i) or GetTradeSkillNumReagents(i), 1 do
+					if self.mode == CRAFT then
+						reagentName, _, _, _ = GetCraftReagentInfo(i, j)
+					elseif self.mode == TRADE then
+						reagentName, _, _, _ = GetTradeSkillReagentInfo(i, j)
+					end
+					local reagent_rating = matcher(reagentName)
+					if reagent_rating then
+						rating = rating and rating + reagent_rating or reagent_rating
+					end
 				end
 			end
 		end
