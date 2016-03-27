@@ -478,7 +478,7 @@ function crafty:BuildList(searchText, searchType)
 
 		local rating
 
-		if not self.availableOnly or numAvailable > 1 then
+		if not self.availableOnly or numAvailable > 0 then
 
 			if searchType == 'Name' then
 				rating = matcher(skillName)
