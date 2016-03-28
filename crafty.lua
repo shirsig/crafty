@@ -218,20 +218,19 @@ function crafty:ADDON_LOADED()
 		self.frame.LinkReagentButton:SetText('Link')
 		self.frame.LinkReagentButton:RegisterForClicks('LeftButtonUp', 'RightButtonUp')
 		self.frame.LinkReagentButton:SetScript('OnClick', function() 
-				if StaticPopup_Visible('CRAFTY_LINK') then 
-					StaticPopup_Hide('CRAFTY_LINK')
-				elseif arg1 == 'RightButton' then
-					StaticPopup_Show('CRAFTY_LINK') 
-				end
+			if StaticPopup_Visible('CRAFTY_LINK') then 
+				StaticPopup_Hide('CRAFTY_LINK')
+			elseif arg1 == 'RightButton' then
+				StaticPopup_Show('CRAFTY_LINK') 
+			end
 
-				if arg1 == 'LeftButton' then
-					local channel = GetNumPartyMembers() == 0 and 'WHISPER' or 'PARTY'
-					if channel == 'PARTY' or ChatEdit_GetLastTellTarget(ChatFrameEditBox) ~= '' then
-						crafty:SendReagentsMessage(channel, ChatEdit_GetLastTellTarget(ChatFrameEditBox))
-					end
+			if arg1 == 'LeftButton' then
+				local channel = GetNumPartyMembers() == 0 and 'WHISPER' or 'PARTY'
+				if channel == 'PARTY' or ChatEdit_GetLastTellTarget(ChatFrameEditBox) ~= '' then
+					crafty:SendReagentsMessage(channel, ChatEdit_GetLastTellTarget(ChatFrameEditBox))
 				end
 			end
-		)
+		end)
 
 		-- Reset Button
 		self.frame.ResetButton = CreateFrame('Button', nil, self.frame, 'GameMenuButtonTemplate')
@@ -239,7 +238,10 @@ function crafty:ADDON_LOADED()
 		self.frame.ResetButton:SetHeight(25)
 		self.frame.ResetButton:SetPoint('RIGHT', self.frame, 'RIGHT', -12, 0)
 		self.frame.ResetButton:SetText('R')
-		self.frame.ResetButton:SetScript('OnClick', function() self:Reset() end)
+		self.frame.ResetButton:SetScript('OnClick', function()
+			self:Reset()
+			self.availableOnly = false 
+		end)
 	end
 end
 
