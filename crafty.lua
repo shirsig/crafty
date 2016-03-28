@@ -435,7 +435,7 @@ function crafty:Search()
 
 	self:Update()
 	if getn(self.found) > 0 then
-		if self.mode == CRAFT then
+		if self.mode == CRAFT and GetCraftSelectionIndex() > 0 then
 			CraftFrame_SetSelection(self.found[1].index)
 		elseif self.mode == TRADE then
 			TradeSkillFrame_SetSelection(self.found[1].index)
