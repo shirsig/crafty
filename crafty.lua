@@ -238,10 +238,7 @@ function crafty:ADDON_LOADED()
 		self.frame.ResetButton:SetHeight(25)
 		self.frame.ResetButton:SetPoint('RIGHT', self.frame, 'RIGHT', -12, 0)
 		self.frame.ResetButton:SetText('R')
-		self.frame.ResetButton:SetScript('OnClick', function()
-			self:Reset()
-			self.availableOnly = false 
-		end)
+		self.frame.ResetButton:SetScript('OnClick', function() self:Reset() end)
 	end
 end
 
@@ -450,6 +447,8 @@ end
 function crafty:Reset()
 	self:SetSearchType(1)
 	self:SetSearchText('')
+	self.availableOnly = false
+	self.frame.AvailableOnlyButton:UnlockHighlight()
 	self:Update()
 end
 
