@@ -6,12 +6,6 @@ crafty:RegisterEvent('ADDON_LOADED')
 
 local TRADE, CRAFT = 1, 2
 
-local SEARCH_TYPES = {
-	'Name',
-	'Reagent',
-	'Requires',
-}
-
 do
 	local function action()
 	    local input = strlower(getglobal(this:GetParent():GetName()..'EditBox'):GetText())
@@ -93,14 +87,6 @@ function crafty:GetSearchText()
 	return crafty:loadState().searchText
 end
 
-function crafty:SetSearchType(searchType)
-	crafty:loadState().searchType = searchType
-end
-
-function crafty:GetSearchType()
-	return crafty:loadState().searchType
-end
-
 function crafty:ADDON_LOADED()
 	if arg1 ~= 'crafty' then
 		return
@@ -174,7 +160,7 @@ function crafty:ADDON_LOADED()
 		-- Editbox for search text
 		self.frame.SearchBox = CreateFrame('EditBox', nil, self.frame, 'InputBoxTemplate')
 		self.frame.SearchBox:SetAutoFocus(false)
-		self.frame.SearchBox:SetWidth(100)
+		self.frame.SearchBox:SetWidth(124)
 		self.frame.SearchBox:SetHeight(20)
 		self.frame.SearchBox:SetPoint('LEFT', self.frame, 'LEFT', 17, 0)
 		self.frame.SearchBox:SetBackdropColor(TOOLTIP_DEFAULT_COLOR.r, TOOLTIP_DEFAULT_COLOR.g, TOOLTIP_DEFAULT_COLOR.b)
@@ -183,23 +169,13 @@ function crafty:ADDON_LOADED()
 		self.frame.SearchBox:SetScript('OnEnterPressed', function()
 			this:ClearFocus()
 		end)
-	
-		-- SearchType button
-		self.frame.SearchTypeButton = CreateFrame('Button', nil, self.frame, 'GameMenuButtonTemplate')
-		self.frame.SearchTypeButton:SetWidth(70)
-		self.frame.SearchTypeButton:SetHeight(25)
-		self.frame.SearchTypeButton:SetPoint('LEFT', self.frame.SearchBox, 'RIGHT', 4, 0)
-		self.frame.SearchTypeButton:SetScript('OnClick', function()
-			self:SetSearchType(mod(self:GetSearchType(), 3) + 1)
-			self:Search()
-		end)
 
 		-- Available button
 		self.frame.AvailableOnlyButton = CreateFrame('Button', nil, self.frame, 'GameMenuButtonTemplate')
-		self.frame.AvailableOnlyButton:SetWidth(60)
+		self.frame.AvailableOnlyButton:SetWidth(80)
 		self.frame.AvailableOnlyButton:SetHeight(25)
-		self.frame.AvailableOnlyButton:SetPoint('LEFT', self.frame.SearchTypeButton, 'RIGHT', 2, 0)
-		self.frame.AvailableOnlyButton:SetText('Avail.')
+		self.frame.AvailableOnlyButton:SetPoint('LEFT', self.frame.SearchBox, 'RIGHT', 4, 0)
+		self.frame.AvailableOnlyButton:SetText('Available')
 		self.frame.AvailableOnlyButton:SetScript('OnClick', function()
 			self.availableOnly = not self.availableOnly
 			if self.availableOnly then
@@ -212,7 +188,7 @@ function crafty:ADDON_LOADED()
 		
 		-- Link Reagents button
 		self.frame.LinkReagentButton = CreateFrame('Button', nil, self.frame, 'GameMenuButtonTemplate')
-		self.frame.LinkReagentButton:SetWidth(50)
+		self.frame.LinkReagentButton:SetWidth(80)
 		self.frame.LinkReagentButton:SetHeight(25)
 		self.frame.LinkReagentButton:SetPoint('LEFT', self.frame.AvailableOnlyButton, 'RIGHT', 2, 0)
 		self.frame.LinkReagentButton:SetText('Link')
@@ -321,9 +297,6 @@ function crafty:OnClose()
 end
 
 function crafty:Update()
-	local searchType = SEARCH_TYPES[self:GetSearchType()]
-
-	self.frame.SearchTypeButton:SetText(searchType)
 	self.frame.SearchBox:SetText(self:GetSearchText())
 
 	-- may be disabled from the no results message
@@ -334,7 +307,7 @@ function crafty:Update()
 		local skillOffset = FauxScrollFrame_GetOffset(getglobal(self.currentFrame.elements.Scroll))	
 		local skillButton
 		
-		self:BuildList(self:GetSearchText(), searchType)
+		self:BuildList(self:GetSearchText())
 						
 		if self.mode == TRADE then
 			getglobal(self.frames.trade.elements.CollapseAll):Disable();
@@ -445,7 +418,6 @@ function crafty:Search()
 end
 
 function crafty:Reset()
-	self:SetSearchType(1)
 	self:SetSearchText('')
 	self.availableOnly = false
 	self.frame.AvailableOnlyButton:UnlockHighlight()
@@ -462,7 +434,7 @@ function crafty:SelectionInList(skillOffset)
 	return false
 end
 
-function crafty:BuildList(searchText, searchType)
+function crafty:BuildList(searchText)
 	self.found = {}
 
 	local matcher = self:fuzzy_matcher(searchText)
@@ -477,26 +449,32 @@ function crafty:BuildList(searchText, searchType)
 			requires = GetTradeSkillTools(i)
 		end
 
-		local rating
+		local rating, matchType
+		local NAME, REAGENT, REQUIRES = 1, 2, 3
 
 		if not self.availableOnly or numAvailable > 0 then
 
-			if searchType == 'Name' then
-				rating = matcher(skillName)
-			elseif searchType == 'Requires' then
-				rating = requires and matcher(BuildListString(requires))
-			elseif searchType == 'Reagent' then
+			rating = matcher(skillName)
+			matchType = NAME
+
+			if not rating then
 				for j=1,self.mode == CRAFT and GetCraftNumReagents(i) or GetTradeSkillNumReagents(i), 1 do
 					if self.mode == CRAFT then
 						reagentName, _, _, _ = GetCraftReagentInfo(i, j)
 					elseif self.mode == TRADE then
 						reagentName, _, _, _ = GetTradeSkillReagentInfo(i, j)
 					end
-					local reagent_rating = matcher(reagentName)
-					if reagent_rating then
-						rating = rating and rating + reagent_rating or reagent_rating
+					local reagentRating = reagentName and matcher(reagentName)
+					if reagentRating then
+						rating = rating and rating + reagentRating or reagentRating
 					end
 				end
+				matchType = REAGENT
+			end
+
+			if not rating then
+				rating = requires and matcher(BuildListString(requires))
+				matchType = REQUIRES
 			end
 		end
 
@@ -507,6 +485,7 @@ function crafty:BuildList(searchText, searchType)
 				available		= numAvailable,
 				index 			= i,
 				rating 			= rating,
+				matchType		= matchType
 			})
 		elseif skillType == 'header' and not isExpanded then
 			-- We need to expand any unexpanded header types, otherwise we can't parse their sub data.
@@ -514,7 +493,7 @@ function crafty:BuildList(searchText, searchType)
 		end
 	end
 	
-	sort(self.found, function(a, b) return b.rating < a.rating or a.rating == b.rating and strlen(a.name) < strlen(b.name) end)
+	sort(self.found, function(a, b) return a.matchType < b.matchType or a.matchType == b.matchType and (b.rating < a.rating or a.rating == b.rating and strlen(a.name) < strlen(b.name)) end)
 end
 
 function crafty:SendReagentsMessage(channel, who)
@@ -531,6 +510,10 @@ function crafty:SendReagentsMessage(channel, who)
 	for i=1,self.mode == CRAFT and GetCraftNumReagents(index) or GetTradeSkillNumReagents(index) do
 		local reagent_link = self.mode == CRAFT and GetCraftReagentItemLink(index, i) or GetTradeSkillReagentItemLink(index, i)
 		local reagent_count = (self.mode == CRAFT and { GetCraftReagentInfo(index, i) } or { GetTradeSkillReagentInfo(index, i) })[3]
+
+		if not reagent_link then
+			return
+		end
 
 		local reagent_info = format(
 			'%s x %i',
