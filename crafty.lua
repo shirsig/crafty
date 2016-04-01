@@ -87,6 +87,14 @@ function crafty:GetSearchText()
 	return crafty:loadState().searchText
 end
 
+function crafty:SetAvailableOnly(availableOnly)
+	crafty:loadState().availableOnly = availableOnly
+end
+
+function crafty:GetAvailableOnly()
+	return crafty:loadState().availableOnly
+end
+
 function crafty:ADDON_LOADED()
 	if arg1 ~= 'crafty' then
 		return
@@ -177,8 +185,8 @@ function crafty:ADDON_LOADED()
 		self.frame.AvailableOnlyButton:SetPoint('LEFT', self.frame.SearchBox, 'RIGHT', 4, 0)
 		self.frame.AvailableOnlyButton:SetText('Available')
 		self.frame.AvailableOnlyButton:SetScript('OnClick', function()
-			self.availableOnly = not self.availableOnly
-			if self.availableOnly then
+			self:SetAvailableOnly(not self:GetAvailableOnly())
+			if self:GetAvailableOnly() then
 				this:LockHighlight()
 			else
 				this:UnlockHighlight()
@@ -302,7 +310,7 @@ function crafty:Update()
 	-- may be disabled from the no results message
 	getglobal((self.mode == CRAFT and 'Craft' or 'TradeSkillSkill')..1):Enable()
 	
-	if (self:GetSearchText() ~= '' or self.availableOnly) and getglobal(self.currentFrame.elements.Main):IsShown() then
+	if (self:GetSearchText() ~= '' or self:GetAvailableOnly()) and getglobal(self.currentFrame.elements.Main):IsShown() then
 
 		local skillOffset = FauxScrollFrame_GetOffset(getglobal(self.currentFrame.elements.Scroll))	
 		local skillButton
@@ -402,6 +410,11 @@ end
 
 function crafty:Search()
 	self:SetSearchText(self.frame.SearchBox:GetText())
+	if self:GetAvailableOnly() then
+		self.frame.AvailableOnlyButton:LockHighlight()
+	else
+		self.frame.AvailableOnlyButton:UnlockHighlight()
+	end
 	
 	FauxScrollFrame_SetOffset(getglobal(self.currentFrame.elements.Main), 0)
 	getglobal(self.currentFrame.elements.ScrollBar):SetValue(0)
@@ -419,7 +432,7 @@ end
 
 function crafty:Reset()
 	self:SetSearchText('')
-	self.availableOnly = false
+	self:SetAvailableOnly(false)
 	self.frame.AvailableOnlyButton:UnlockHighlight()
 	self:Update()
 end
@@ -452,7 +465,7 @@ function crafty:BuildList(searchText)
 		local rating, matchType
 		local NAME, REAGENT, REQUIRES = 1, 2, 3
 
-		if not self.availableOnly or numAvailable > 0 then
+		if not self:GetAvailableOnly() or numAvailable > 0 then
 
 			rating = matcher(skillName)
 			matchType = NAME
