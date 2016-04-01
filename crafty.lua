@@ -551,7 +551,7 @@ function crafty:fuzzy_matcher(input)
 	local pattern = '(.*)'
 	for i=1,strlen(uppercase_input) do
 		if strfind(string.sub(uppercase_input, i, i), '%w') or strfind(string.sub(uppercase_input, i, i), '%s') then
-			pattern = pattern .. string.sub(uppercase_input, i, i) .. '(.*)'
+			pattern = pattern .. string.sub(uppercase_input, i, i) .. '(.-)'
  		end
 	end
 	return function(candidate)
