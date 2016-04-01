@@ -462,32 +462,33 @@ function crafty:BuildList(searchText)
 			requires = GetTradeSkillTools(i)
 		end
 
-		local rating, matchType
-		local NAME, REAGENT, REQUIRES = 1, 2, 3
+		local rating
 
 		if not self:GetAvailableOnly() or numAvailable > 0 then
 
-			rating = matcher(skillName)
-			matchType = NAME
+			local nameRating = matcher(skillName)
 
-			if not rating then
-				for j=1,self.mode == CRAFT and GetCraftNumReagents(i) or GetTradeSkillNumReagents(i), 1 do
-					if self.mode == CRAFT then
-						reagentName, _, _, _ = GetCraftReagentInfo(i, j)
-					elseif self.mode == TRADE then
-						reagentName, _, _, _ = GetTradeSkillReagentInfo(i, j)
-					end
-					local reagentRating = reagentName and matcher(reagentName)
-					if reagentRating then
-						rating = rating and rating + reagentRating or reagentRating
-					end
+			local reagentsRating
+			for j=1,self.mode == CRAFT and GetCraftNumReagents(i) or GetTradeSkillNumReagents(i), 1 do
+				if self.mode == CRAFT then
+					reagentName, _, _, _ = GetCraftReagentInfo(i, j)
+				elseif self.mode == TRADE then
+					reagentName, _, _, _ = GetTradeSkillReagentInfo(i, j)
 				end
-				matchType = REAGENT
+				local reagentRating = reagentName and matcher(reagentName)
+				if reagentRating then
+					reagentsRating = reagentsRating and max(reagentsRating, reagentRating) or reagentRating
+				end
 			end
 
-			if not rating then
-				rating = requires and matcher(BuildListString(requires))
-				matchType = REQUIRES
+			local requiresRating = requires and matcher(BuildListString(requires))
+
+			rating = nameRating and nameRating * 2
+			if reagentsRating then
+				rating = rating and max(rating, reagentsRating) or reagentsRating
+			end
+			if requiresRating then
+				rating = rating and max(rating, requiresRating) or requiresRating
 			end
 		end
 
@@ -498,7 +499,6 @@ function crafty:BuildList(searchText)
 				available		= numAvailable,
 				index 			= i,
 				rating 			= rating,
-				matchType		= matchType
 			})
 		elseif skillType == 'header' and not isExpanded then
 			-- We need to expand any unexpanded header types, otherwise we can't parse their sub data.
@@ -506,7 +506,7 @@ function crafty:BuildList(searchText)
 		end
 	end
 	
-	sort(self.found, function(a, b) return a.matchType < b.matchType or a.matchType == b.matchType and (b.rating < a.rating or a.rating == b.rating and strlen(a.name) < strlen(b.name)) end)
+	sort(self.found, function(a, b) return b.rating < a.rating or a.rating == b.rating and strlen(a.name) < strlen(b.name) end)
 end
 
 function crafty:SendReagentsMessage(channel, who)
