@@ -178,27 +178,33 @@ function crafty:ADDON_LOADED()
 			this:ClearFocus()
 		end)
 
-		-- Available button
-		self.frame.AvailableOnlyButton = CreateFrame('Button', nil, self.frame, 'GameMenuButtonTemplate')
-		self.frame.AvailableOnlyButton:SetWidth(80)
-		self.frame.AvailableOnlyButton:SetHeight(25)
-		self.frame.AvailableOnlyButton:SetPoint('LEFT', self.frame.SearchBox, 'RIGHT', 4, 0)
-		self.frame.AvailableOnlyButton:SetText('Available')
-		self.frame.AvailableOnlyButton:SetScript('OnClick', function()
-			self:SetAvailableOnly(not self:GetAvailableOnly())
-			if self:GetAvailableOnly() then
-				this:LockHighlight()
-			else
-				this:UnlockHighlight()
-			end
-			self:Search()
-		end)
-		
+		-- Available Only Checkbutton
+		self.frame.AvailableOnlyButton = CreateFrame('CheckButton', nil, self.frame, 'UICheckButtonTemplate')
+		self.frame.AvailableOnlyButton:SetWidth(22)
+        self.frame.AvailableOnlyButton:SetHeight(22)
+		self.frame.AvailableOnlyButton:SetPoint('LEFT', self.frame.SearchBox, 'RIGHT', 60, 0)
+        self.frame.AvailableOnlyButton:SetScript('OnClick', function()
+            self:SetAvailableOnly(this:GetChecked())
+            self:Search()
+        end)
+	    local label = self.frame.AvailableOnlyButton:CreateFontString()
+	    label:SetPoint('RIGHT', self.frame.AvailableOnlyButton, 'LEFT', -3, 0)
+	    label:SetFont([[Fonts\ARIALN.TTF]], 14)
+	    label:SetText('Available')
+
+		-- Reset Button
+		self.frame.ResetButton = CreateFrame('Button', nil, self.frame, 'GameMenuButtonTemplate')
+		self.frame.ResetButton:SetWidth(52)
+		self.frame.ResetButton:SetHeight(25)
+		self.frame.ResetButton:SetPoint('LEFT', self.frame.AvailableOnlyButton, 'RIGHT', 2, 0)
+		self.frame.ResetButton:SetText('Clear')
+		self.frame.ResetButton:SetScript('OnClick', function() self:Reset() end)
+
 		-- Link Reagents button
 		self.frame.LinkReagentButton = CreateFrame('Button', nil, self.frame, 'GameMenuButtonTemplate')
-		self.frame.LinkReagentButton:SetWidth(80)
+		self.frame.LinkReagentButton:SetWidth(52)
 		self.frame.LinkReagentButton:SetHeight(25)
-		self.frame.LinkReagentButton:SetPoint('LEFT', self.frame.AvailableOnlyButton, 'RIGHT', 2, 0)
+		self.frame.LinkReagentButton:SetPoint('LEFT', self.frame.ResetButton, 'RIGHT', 2, 0)
 		self.frame.LinkReagentButton:SetText('Link')
 		self.frame.LinkReagentButton:RegisterForClicks('LeftButtonUp', 'RightButtonUp')
 		self.frame.LinkReagentButton:SetScript('OnClick', function() 
@@ -215,14 +221,6 @@ function crafty:ADDON_LOADED()
 				end
 			end
 		end)
-
-		-- Reset Button
-		self.frame.ResetButton = CreateFrame('Button', nil, self.frame, 'GameMenuButtonTemplate')
-		self.frame.ResetButton:SetWidth(20)
-		self.frame.ResetButton:SetHeight(25)
-		self.frame.ResetButton:SetPoint('RIGHT', self.frame, 'RIGHT', -12, 0)
-		self.frame.ResetButton:SetText('R')
-		self.frame.ResetButton:SetScript('OnClick', function() self:Reset() end)
 	end
 end
 
@@ -410,11 +408,7 @@ end
 
 function crafty:Search()
 	self:SetSearchText(self.frame.SearchBox:GetText())
-	if self:GetAvailableOnly() then
-		self.frame.AvailableOnlyButton:LockHighlight()
-	else
-		self.frame.AvailableOnlyButton:UnlockHighlight()
-	end
+	self.frame.AvailableOnlyButton:SetChecked(self:GetAvailableOnly())
 	
 	FauxScrollFrame_SetOffset(getglobal(self.currentFrame.elements.Main), 0)
 	getglobal(self.currentFrame.elements.ScrollBar):SetValue(0)
@@ -433,7 +427,7 @@ end
 function crafty:Reset()
 	self:SetSearchText('')
 	self:SetAvailableOnly(false)
-	self.frame.AvailableOnlyButton:UnlockHighlight()
+	self.frame.AvailableOnlyButton:SetChecked(nil)
 	self:Update()
 end
 
