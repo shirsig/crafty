@@ -136,9 +136,9 @@ function crafty:ADDON_LOADED()
 	local origSetItemRef = SetItemRef
 	SetItemRef = function(...)
 		local popup = StaticPopup_FindVisible('CRAFTY_LINK')
-	    local _, _, player_name = strfind(unpack(arg), 'player:(.+)')
-	    if popup and IsShiftKeyDown() and player_name then
-	    	getglobal(popup:GetName()..'EditBox'):SetText(player_name)
+	    local _, _, playerName = strfind(unpack(arg), 'player:(.+)')
+	    if popup and IsShiftKeyDown() and playerName then
+	    	getglobal(popup:GetName()..'EditBox'):SetText(playerName)
 	    	return
 	    end
 	    return origSetItemRef(unpack(arg))
@@ -444,7 +444,7 @@ end
 function crafty:BuildList(searchText)
 	self.found = {}
 
-	local matcher = self:fuzzy_matcher(searchText)
+	local matcher = self:FuzzyMatcher(searchText)
 	
 	for i=1,self.mode == CRAFT and GetNumCrafts() or GetNumTradeSkills() do
 		local skillName, skillType, numAvailable, isExpanded, requires
@@ -513,39 +513,39 @@ function crafty:SendReagentsMessage(channel, who)
 
 	local message = {}
 
-	local message_part = (self.mode == CRAFT and GetCraftItemLink(index) or GetTradeSkillItemLink(index))..' ='
+	local messagePart = (self.mode == CRAFT and GetCraftItemLink(index) or GetTradeSkillItemLink(index))..' ='
 	for i=1,self.mode == CRAFT and GetCraftNumReagents(index) or GetTradeSkillNumReagents(index) do
-		local reagent_link = self.mode == CRAFT and GetCraftReagentItemLink(index, i) or GetTradeSkillReagentItemLink(index, i)
-		local reagent_count = (self.mode == CRAFT and { GetCraftReagentInfo(index, i) } or { GetTradeSkillReagentInfo(index, i) })[3]
+		local reagentLink = self.mode == CRAFT and GetCraftReagentItemLink(index, i) or GetTradeSkillReagentItemLink(index, i)
+		local reagentCount = (self.mode == CRAFT and { GetCraftReagentInfo(index, i) } or { GetTradeSkillReagentInfo(index, i) })[3]
 
-		if not reagent_link then
+		if not reagentLink then
 			return
 		end
 
-		local reagent_info = format(
+		local reagentInfo = format(
 			'%s x %i',
-			reagent_link,
-			reagent_count
+			reagentLink,
+			reagentCount
 		)
-		if strlen(message_part..reagent_info) > 255 then
-			tinsert(message, message_part)
-			message_part = '(cont.)'
+		if strlen(messagePart..reagentInfo) > 255 then
+			tinsert(message, messagePart)
+			messagePart = '(cont.)'
 		end
-		message_part = message_part..' '..reagent_info
+		messagePart = messagePart..' '..reagentInfo
 	end
-	tinsert(message, message_part)
+	tinsert(message, messagePart)
 
 	for _, part in ipairs(message) do
 		SendChatMessage(part, channel, GetDefaultLanguage('player'), who)
 	end
 end
 
-function crafty:fuzzy_matcher(input)
-	local uppercase_input = strupper(input)
+function crafty:FuzzyMatcher(input)
+	local uppercaseInput = strupper(input)
 	local pattern = '(.*)'
-	for i=1,strlen(uppercase_input) do
-		if strfind(strsub(uppercase_input, i, i), '%w') or strfind(strsub(uppercase_input, i, i), '%s') then
-			pattern = pattern .. strsub(uppercase_input, i, i) .. '(.-)'
+	for i=1,strlen(uppercaseInput) do
+		if strfind(strsub(uppercaseInput, i, i), '%w') or strfind(strsub(uppercaseInput, i, i), '%s') then
+			pattern = pattern .. strsub(uppercaseInput, i, i) .. '(.-)'
  		end
 	end
 	return function(candidate)
