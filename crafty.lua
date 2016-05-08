@@ -544,12 +544,12 @@ function crafty:fuzzy_matcher(input)
 	local uppercase_input = strupper(input)
 	local pattern = '(.*)'
 	for i=1,strlen(uppercase_input) do
-		if strfind(string.sub(uppercase_input, i, i), '%w') or strfind(string.sub(uppercase_input, i, i), '%s') then
-			pattern = pattern .. string.sub(uppercase_input, i, i) .. '(.-)'
+		if strfind(strsub(uppercase_input, i, i), '%w') or strfind(strsub(uppercase_input, i, i), '%s') then
+			pattern = pattern .. strsub(uppercase_input, i, i) .. '(.-)'
  		end
 	end
 	return function(candidate)
-		local match = { string.find(strupper(candidate), pattern) }
+		local match = { strfind(strupper(candidate), pattern) }
 		if match[1] then
 			local rating = 0
 			for i=4,getn(match)-1 do
