@@ -523,7 +523,7 @@ function crafty:SendReagentsMessage(channel, who)
 		end
 
 		local reagentInfo = format(
-			'%s x %i',
+			'%s x%i',
 			reagentLink,
 			reagentCount
 		)
