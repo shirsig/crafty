@@ -162,7 +162,8 @@ function crafty:ADDON_LOADED()
 				insets = {left = 5, right = 6, top = 6, bottom = 5},
 		})
 		self.frame:SetBackdropColor(1, 1, 1, 1)
-		self.frame:SetBackdropBorderColor(0, .8, 0, 1)
+		local r, g, b = GetItemQualityColor(0)
+		self.frame:SetBackdropBorderColor(r, g, b, 1)
 		
 		-- Create sub-frames
 		-- Editbox for search text
