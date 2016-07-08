@@ -447,6 +447,8 @@ end
 
 function crafty:BuildList(searchText)
 	self.found = {}
+	local reagents = {}
+	local skills = {}
 
 	local matcher = self:FuzzyMatcher(searchText)
 	
@@ -460,51 +462,101 @@ function crafty:BuildList(searchText)
 			requires = GetTradeSkillTools(i)
 		end
 
-		local rating
+		local nameRating = matcher(skillName)
 
-		if not self:GetAvailableOnly() or numAvailable > 0 then
-
-			local nameRating = matcher(skillName)
-
-			local reagentsRating
-			for j=1,self.mode == CRAFT and GetCraftNumReagents(i) or GetTradeSkillNumReagents(i), 1 do
-				if self.mode == CRAFT then
-					reagentName, _, _, _ = GetCraftReagentInfo(i, j)
-				elseif self.mode == TRADE then
-					reagentName, _, _, _ = GetTradeSkillReagentInfo(i, j)
-				end
-				local reagentRating = reagentName and matcher(reagentName)
-				if reagentRating then
-					reagentsRating = reagentsRating and max(reagentsRating, reagentRating) or reagentRating
-				end
+		local reagents = {}
+		local reagentsRating
+		for j=1,self.mode == CRAFT and GetCraftNumReagents(i) or GetTradeSkillNumReagents(i), 1 do
+			local reagentName
+			if self.mode == CRAFT then
+				reagentName, _, _, _ = GetCraftReagentInfo(i, j)
+			elseif self.mode == TRADE then
+				reagentName, _, _, _ = GetTradeSkillReagentInfo(i, j)
 			end
+			
+			tinsert(reagents, reagentName)
 
-			local requiresRating = requires and matcher(BuildListString(requires))
-
-			rating = nameRating and nameRating * 2
-			if reagentsRating then
-				rating = rating and max(rating, reagentsRating) or reagentsRating
-			end
-			if requiresRating then
-				rating = rating and max(rating, requiresRating) or requiresRating
+			local reagentRating = reagentName and matcher(reagentName)
+			if reagentRating then
+				reagentsRating = reagentsRating and max(reagentsRating, reagentRating) or reagentRating
 			end
 		end
 
-		if rating and skillType ~= 'header' then
-			tinsert(self.found, {
+		local requiresRating = requires and matcher(BuildListString(requires))
+
+		local rating = nameRating and nameRating * 2
+		if reagentsRating then
+			rating = rating and max(rating, reagentsRating) or reagentsRating
+		end
+		if requiresRating then
+			rating = rating and max(rating, requiresRating) or requiresRating
+		end
+
+		if skillType ~= 'header' then
+			skills[skillName] = {
 				name			= skillName,
 				type 			= skillType,
 				available		= numAvailable,
 				index 			= i,
 				rating 			= rating,
-			})
+				reagents        = reagents,
+				reagentRank     = 0,
+			}
 		elseif skillType == 'header' and not isExpanded then
 			-- We need to expand any unexpanded header types, otherwise we can't parse their sub data.
 			ExpandTradeSkillSubClass(i)
 		end
 	end
-	
-	sort(self.found, function(a, b) return b.rating < a.rating or a.rating == b.rating and strlen(a.name) < strlen(b.name) end)
+
+	local found = {}
+	for _, skill in skills do
+		if skill.rating and (not self:GetAvailableOnly() or skill.available > 0) then
+			found[skill.name] = true
+		end
+	end
+
+	while true do
+		local changed
+		for _, skill in skills do
+			if found[skill.name] then
+				for _, reagentName in skill.reagents do
+					local reagent = skills[reagentName]
+					if reagent then
+						if not found[reagentName] then
+							found[reagentName] = true
+							changed = true
+						end
+						if not reagent.rating or skill.rating > reagent.rating then
+							reagent.rating = skill.rating
+							reagent.reagentRank = skill.reagentRank + 1
+						end
+					end
+				end
+			end
+		end
+		if not changed then
+			break
+		end
+	end
+
+	for skillName, _ in found do
+		tinsert(self.found, skills[skillName])
+	end
+	sort(self.found, function(a, b)
+		if b.rating < a.rating then
+			return true
+		elseif a.rating == b.rating then
+			if a.reagentRank < b.reagentRank then
+				return true
+			elseif a.reagentRank == b.reagentRank then
+				if a.reagentRank == 0 and strlen(a.name) < strlen(b.name) then
+					return true
+				elseif a.reagentRank > 0 or strlen(a.name) == strlen(b.name) then
+					return a.index < b.index
+				end
+			end
+		end
+	end)
 end
 
 function crafty:SendReagentsMessage(channel, who)
