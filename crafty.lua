@@ -188,7 +188,7 @@ function crafty:ADDON_LOADED()
 		self.frame.ResetButton:SetScript('OnClick', function() self:Reset() end)
 
 		-- Available Only Button
-		self.frame.AvailableOnlyButton = CreateFrame('Button', nil, self.frame, 'GameMenuButtonTemplate')
+		self.frame.AvailableOnlyButton = CreateFrame('Button', nil, self.frame, 'UIPanelButtonTemplate')
 		self.frame.AvailableOnlyButton:SetWidth(52)
 		self.frame.AvailableOnlyButton:SetHeight(25)
 		self.frame.AvailableOnlyButton:SetPoint('LEFT', self.frame.SearchBox, 'RIGHT', 2, 0)
@@ -204,7 +204,7 @@ function crafty:ADDON_LOADED()
         end)
 
 		-- Link Reagents button
-		self.frame.LinkReagentButton = CreateFrame('Button', nil, self.frame, 'GameMenuButtonTemplate')
+		self.frame.LinkReagentButton = CreateFrame('Button', nil, self.frame, 'UIPanelButtonTemplate')
 		self.frame.LinkReagentButton:SetWidth(52)
 		self.frame.LinkReagentButton:SetHeight(25)
 		self.frame.LinkReagentButton:SetPoint('LEFT', self.frame.AvailableOnlyButton, 'RIGHT', 2, 0)
