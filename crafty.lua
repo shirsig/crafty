@@ -244,7 +244,7 @@ function crafty:CRAFT_SHOW()
 	if not self.frames.craft.orig_update then
 		self:RegisterEvent('CRAFT_CLOSE')
 		self.frames.craft.orig_update = CraftFrame_Update
-		CraftFrame_Update = function() self:Update() end
+		CraftFrame_Update = function() self:BuildList(self:GetSearchText()) self:UpdateListing() end
 	end
 	self.frames.craft.orig_update()
 	
@@ -259,9 +259,7 @@ function crafty:CRAFT_SHOW()
 	self.frame:ClearAllPoints()
 	self.frame:SetPoint('TOPRIGHT', self.frames.craft.anchor, 'BOTTOMRIGHT', self.frames.craft.anchor_offset_x, self.frames.craft.anchor_offset_y)
 
-	self.frame:Show()
-	self:Update()
-	self:Search()
+	crafty:Show()
 end
 
 function crafty:TRADE_SKILL_SHOW()
@@ -271,7 +269,7 @@ function crafty:TRADE_SKILL_SHOW()
 	if not self.frames.trade.orig_update then
 		self:RegisterEvent('TRADE_SKILL_CLOSE')
 		self.frames.trade.orig_update = TradeSkillFrame_Update
-		TradeSkillFrame_Update = function() self:Update() end
+		TradeSkillFrame_Update = function() self:BuildList(self:GetSearchText()) self:UpdateListing() end
 	end
 	self.frames.trade.orig_update()
 		
@@ -286,8 +284,17 @@ function crafty:TRADE_SKILL_SHOW()
 	self.frame:ClearAllPoints()
 	self.frame:SetPoint('TOPLEFT', self.frames.trade.anchor, 'BOTTOMLEFT', self.frames.trade.anchor_offset_x, self.frames.trade.anchor_offset_y)
 
+	crafty:Show()
+end
+
+function crafty:Show()
 	self.frame:Show()
-	self:Update()
+	if self:GetAvailableOnly() then
+		self.frame.AvailableOnlyButton:LockHighlight()
+	else
+		self.frame.AvailableOnlyButton:UnlockHighlight()
+	end
+	self.frame.SearchBox:SetText(self:GetSearchText())
 	self:Search()
 end
 
@@ -304,8 +311,7 @@ function crafty:OnClose()
 	StaticPopup_Hide('CRAFTY_LINK')
 end
 
-function crafty:Update()
-	self.frame.SearchBox:SetText(self:GetSearchText())
+function crafty:UpdateListing()
 
 	-- may be disabled from the no results message
 	getglobal((self.mode == CRAFT and 'Craft' or 'TradeSkillSkill')..1):Enable()
@@ -333,7 +339,7 @@ function crafty:Update()
 				local skillIndex = i + skillOffset
 				skillButton = getglobal((self.mode == CRAFT and 'Craft' or 'TradeSkillSkill')..i)
 				
-				if i <= getn(self.found) then
+				if self.found[skillIndex] then
 					if getglobal(self.currentFrame.elements.Scroll):IsVisible() then
 						skillButton:SetWidth(293)
 					else
@@ -398,10 +404,8 @@ function crafty:Update()
 		if self.mode == CRAFT then
 			self.frames.craft.orig_update()
 		elseif self.mode == TRADE then
-			if self.mode == TRADE then
-				for i=1, TRADE_SKILLS_DISPLAYED, 1 do
-					getglobal('TradeSkillSkill'..i..'Text'):SetPoint('TOPLEFT', 'TradeSkillSkill'..i, 'TOPLEFT', 21, 0)
-				end
+			for i=1, TRADE_SKILLS_DISPLAYED, 1 do
+				getglobal('TradeSkillSkill'..i..'Text'):SetPoint('TOPLEFT', 'TradeSkillSkill'..i, 'TOPLEFT', 21, 0)
 			end
 			self.frames.trade.orig_update()
 		end
@@ -410,29 +414,23 @@ end
 
 function crafty:Search()
 	self:SetSearchText(self.frame.SearchBox:GetText())
-	if self:GetAvailableOnly() then
-		self.frame.AvailableOnlyButton:LockHighlight()
-	else
-		self.frame.AvailableOnlyButton:UnlockHighlight()
-	end
 
 	FauxScrollFrame_SetOffset(getglobal(self.currentFrame.elements.Main), 0)
 	getglobal(self.currentFrame.elements.ScrollBar):SetValue(0)
 
-	self:Update()
+	self:BuildList(self:GetSearchText())
 	if getn(self.found) > 0 then
 		if self.mode == CRAFT and GetCraftSelectionIndex() > 0 then
 			CraftFrame_SetSelection(self.found[1].index)
 		elseif self.mode == TRADE then
 			TradeSkillFrame_SetSelection(self.found[1].index)
 		end
-		self:Update()
 	end
+	self:UpdateListing()
 end
 
 function crafty:Reset()
-	self:SetSearchText('')
-	self:Update()
+	self.frame.SearchBox:SetText('')
 end
 
 function crafty:SelectionInList(skillOffset)
@@ -441,7 +439,6 @@ function crafty:SelectionInList(skillOffset)
 			return true
 		end
 	end
-	
 	return false
 end
 
