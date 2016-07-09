@@ -6,35 +6,59 @@ crafty:RegisterEvent('ADDON_LOADED')
 
 local TRADE, CRAFT = 1, 2
 
+crafty.frames = {
+	trade = {
+		elements = {
+			Main = 'TradeSkillFrame',
+			Title = 'TradeSkillFrameTitleText',
+			Scroll = 'TradeSkillListScrollFrame',
+			ScrollBar = 'TradeSkillListScrollFrameScrollBar',
+			Highlight = 'TradeSkillHighlightFrame',
+			CollapseAll = 'TradeSkillCollapseAllButton',
+		},
+		anchor = {'TOPLEFT', 'TradeSkillCreateAllButton', 'BOTTOMLEFT', -9, -8},
+	},
+	craft = {
+		elements = {
+			Main = 'CraftFrame',
+			Title = 'CraftFrameTitleText',
+			Scroll = 'CraftListScrollFrame',
+			ScrollBar = 'CraftListScrollFrameScrollBar',
+			Highlight = 'CraftHighlightFrame',
+		},
+		anchor = {'TOPRIGHT', 'CraftCancelButton', 'BOTTOMRIGHT', 6, -8}
+	},
+}
+
 do
 	local function action()
 	    local input = strlower(getglobal(this:GetParent():GetName()..'EditBox'):GetText())
 	    if tonumber(input) then
-	    	crafty:SendReagentsMessage('CHANNEL', input)
+	    	crafty:SendReagentMessage('CHANNEL', input)
 		elseif input == 'guild' or input == 'g' then
-			crafty:SendReagentsMessage('GUILD')
+			crafty:SendReagentMessage('GUILD')
 		elseif input == 'o' then
-			crafty:SendReagentsMessage('OFFICER')
+			crafty:SendReagentMessage('OFFICER')
 		elseif input == 'raid' or input == 'ra' then
-			crafty:SendReagentsMessage('RAID')
+			crafty:SendReagentMessage('RAID')
 		elseif input == 'rw' then
-			crafty:SendReagentsMessage('RAID_WARNING')
+			crafty:SendReagentMessage('RAID_WARNING')
 		elseif input == 'bg' then
-			crafty:SendReagentsMessage('BATTLEGROUND')
+			crafty:SendReagentMessage('BATTLEGROUND')
 		elseif input == 'party' or input == 'p' then
-			crafty:SendReagentsMessage('PARTY')
+			crafty:SendReagentMessage('PARTY')
 		elseif input == 'say' or input == 's' then
-			crafty:SendReagentsMessage('SAY')
+			crafty:SendReagentMessage('SAY')
 		elseif input == 'yell' or input == 'y' then
-			crafty:SendReagentsMessage('YELL')	
+			crafty:SendReagentMessage('YELL')	
 		elseif input == 'emote' or input == 'em' then
-			crafty:SendReagentsMessage('EMOTE')	
+			crafty:SendReagentMessage('EMOTE')	
 		elseif input == 'reply' or input == 'r' then
 			if ChatEdit_GetLastTellTarget(ChatFrameEditBox) ~= '' then
-				crafty:SendReagentsMessage('WHISPER', ChatEdit_GetLastTellTarget(ChatFrameEditBox))
+				crafty:SendReagentMessage('WHISPER', ChatEdit_GetLastTellTarget(ChatFrameEditBox))
 			end
 		elseif strlen(input) > 1 then
-			crafty:SendReagentsMessage('WHISPER', input)
+			crafty:SendReagentMessage('WHISPER', input)
 		end
 	end
 
@@ -61,7 +85,7 @@ do
 	}
 end
 
-function crafty:loadState()
+function crafty:LoadState()
 	self.state = self.state or {}
 
 	local profession
@@ -80,53 +104,25 @@ function crafty:loadState()
 end
 
 function crafty:SetSearchText(searchText)
-	crafty:loadState().searchText = searchText
+	crafty:LoadState().searchText = searchText
 end
 
 function crafty:GetSearchText()
-	return crafty:loadState().searchText
+	return crafty:LoadState().searchText
 end
 
-function crafty:SetAvailableOnly(availableOnly)
-	crafty:loadState().availableOnly = availableOnly
+function crafty:SetDoable(doable)
+	crafty:LoadState().doable = doable
 end
 
-function crafty:GetAvailableOnly()
-	return crafty:loadState().availableOnly
+function crafty:GetDoable()
+	return crafty:LoadState().doable
 end
 
 function crafty:ADDON_LOADED()
 	if arg1 ~= 'crafty' then
 		return
 	end
-
-	self.frames = {
-		trade = {
-			elements = {
-				Main = 'TradeSkillFrame',
-				Title = 'TradeSkillFrameTitleText',
-				Scroll = 'TradeSkillListScrollFrame',
-				ScrollBar = 'TradeSkillListScrollFrameScrollBar',
-				Highlight = 'TradeSkillHighlightFrame',
-				CollapseAll = 'TradeSkillCollapseAllButton',
-			},
-			anchor = 'TradeSkillCreateAllButton',
-			anchor_offset_x = -9,
-			anchor_offset_y = -8,
-		},
-		craft = {
-			elements = {
-				Main = 'CraftFrame',
-				Title = 'CraftFrameTitleText',
-				Scroll = 'CraftListScrollFrame',
-				ScrollBar = 'CraftListScrollFrameScrollBar',
-				Highlight = 'CraftHighlightFrame',
-			},
-			anchor = 'CraftCancelButton',
-			anchor_offset_x = 6,
-			anchor_offset_y = -8,
-		},
-	}
 
 	self.found = {}
 
@@ -144,93 +140,88 @@ function crafty:ADDON_LOADED()
 	    return origSetItemRef(unpack(arg))
 	end
 
-	if not self.frame then
-		-- Create main frame 
-		self.frame = CreateFrame('Frame', 'craftyFrame', UIParent)
-		self.frame:Hide()
-		-- Set main frame properties
-		self.frame:SetPoint('CENTER', 'UIParent', 'CENTER', 0, 0)
-		self.frame:SetWidth(342)  
-		self.frame:SetHeight(45)
-		self.frame:SetFrameStrata('MEDIUM')
-		self.frame:SetMovable(false)
-		self.frame:EnableMouse(true)
-		-- Set the main frame backdrop
-		self.frame:SetBackdrop({
-				bgFile = 'Interface\\DialogFrame\\UI-DialogBox-Background', tile = true, tileSize = 32,
-				edgeFile = 'Interface\\DialogFrame\\UI-DialogBox-Border', edgeSize = 20,
-				insets = {left = 5, right = 6, top = 6, bottom = 5},
-		})
-		self.frame:SetBackdropColor(1, 1, 1, 1)
-		local r, g, b = GetItemQualityColor(0)
-		self.frame:SetBackdropBorderColor(r, g, b, 1)
-		
-		-- Create sub-frames
-		-- Editbox for search text
-		self.frame.SearchBox = CreateFrame('EditBox', nil, self.frame, 'InputBoxTemplate')
-		self.frame.SearchBox:SetAutoFocus(false)
-		self.frame.SearchBox:SetWidth(206)
-		self.frame.SearchBox:SetHeight(20)
-		self.frame.SearchBox:SetPoint('LEFT', self.frame, 'LEFT', 17, 0)
-		self.frame.SearchBox:SetBackdropColor(TOOLTIP_DEFAULT_COLOR.r, TOOLTIP_DEFAULT_COLOR.g, TOOLTIP_DEFAULT_COLOR.b)
-		self.frame.SearchBox:SetBackdropBorderColor(TOOLTIP_DEFAULT_BACKGROUND_COLOR.r, TOOLTIP_DEFAULT_BACKGROUND_COLOR.g, TOOLTIP_DEFAULT_BACKGROUND_COLOR.b)
-		self.frame.SearchBox:SetScript('OnTextChanged', function() self:Search() end)
-		self.frame.SearchBox:SetScript('OnEnterPressed', function()
-			this:ClearFocus()
-		end)
+	-- Create main frame 
+	self.frame = CreateFrame('Frame', nil, UIParent)
+	self.frame:Hide()
+	-- Set main frame properties
+	self.frame:SetPoint('CENTER', 'UIParent', 'CENTER', 0, 0)
+	self.frame:SetWidth(342)  
+	self.frame:SetHeight(45)
+	self.frame:SetFrameStrata('MEDIUM')
+	self.frame:SetMovable(false)
+	self.frame:EnableMouse(true)
+	-- Set the main frame backdrop
+	self.frame:SetBackdrop({
+			bgFile = [[Interface\DialogFrame\UI-DialogBox-Background]], tile = true, tileSize = 32,
+			edgeFile = [[Interface\DialogFrame\UI-DialogBox-Border]], edgeSize = 20,
+			insets = {left = 5, right = 6, top = 6, bottom = 5},
+	})
+	
+	-- Create sub-frames
+	-- Editbox for search text
+	self.frame.SearchBox = CreateFrame('EditBox', nil, self.frame, 'InputBoxTemplate')
+	self.frame.SearchBox:SetAutoFocus(false)
+	self.frame.SearchBox:SetWidth(206)
+	self.frame.SearchBox:SetHeight(20)
+	self.frame.SearchBox:SetPoint('LEFT', self.frame, 'LEFT', 17, 0)
+	self.frame.SearchBox:SetBackdropColor(TOOLTIP_DEFAULT_COLOR.r, TOOLTIP_DEFAULT_COLOR.g, TOOLTIP_DEFAULT_COLOR.b)
+	self.frame.SearchBox:SetBackdropBorderColor(TOOLTIP_DEFAULT_BACKGROUND_COLOR.r, TOOLTIP_DEFAULT_BACKGROUND_COLOR.g, TOOLTIP_DEFAULT_BACKGROUND_COLOR.b)
+	self.frame.SearchBox:SetScript('OnTextChanged', function() self:Search() end)
+	self.frame.SearchBox:SetScript('OnEnterPressed', function()
+		this:ClearFocus()
+	end)
 
-		-- Reset Button
-		self.frame.ResetButton = CreateFrame('Button', nil, self.frame.SearchBox, 'UIPanelCloseButton')
-		self.frame.ResetButton:SetWidth(20)
-		self.frame.ResetButton:SetHeight(20)
-		self.frame.ResetButton:SetPoint('RIGHT', self.frame.SearchBox, 'RIGHT')
-		self.frame.ResetButton:SetText('Clear')
-		self.frame.ResetButton:SetScript('OnClick', function() self:Reset() end)
+	-- Clear Button
+	self.frame.ClearButton = CreateFrame('Button', nil, self.frame.SearchBox, 'UIPanelCloseButton')
+	self.frame.ClearButton:SetWidth(20)
+	self.frame.ClearButton:SetHeight(20)
+	self.frame.ClearButton:SetPoint('RIGHT', self.frame.SearchBox, 'RIGHT')
+	self.frame.ClearButton:SetText('Clear')
+	self.frame.ClearButton:SetScript('OnClick', function() self.frame.SearchBox:SetText('') end)
 
-		-- Available Only Button
-		self.frame.AvailableOnlyButton = CreateFrame('Button', nil, self.frame, 'UIPanelButtonTemplate')
-		self.frame.AvailableOnlyButton:SetWidth(52)
-		self.frame.AvailableOnlyButton:SetHeight(25)
-		self.frame.AvailableOnlyButton:SetPoint('LEFT', self.frame.SearchBox, 'RIGHT', 2, 0)
-		self.frame.AvailableOnlyButton:SetText('Avail')
-		self.frame.AvailableOnlyButton:SetScript('OnClick', function()
-			self:SetAvailableOnly(not self:GetAvailableOnly())
-			if self:GetAvailableOnly() then
-				this:LockHighlight()
-			else
-				this:UnlockHighlight()
+	-- Doable Button
+	self.frame.DoableButton = CreateFrame('Button', nil, self.frame, 'UIPanelButtonTemplate')
+	self.frame.DoableButton:SetWidth(52)
+	self.frame.DoableButton:SetHeight(25)
+	self.frame.DoableButton:SetPoint('LEFT', self.frame.SearchBox, 'RIGHT', 2, 0)
+	self.frame.DoableButton:SetText('Doable')
+	self.frame.DoableButton:SetScript('OnClick', function()
+		self:SetDoable(not self:GetDoable())
+		if self:GetDoable() then
+			this:LockHighlight()
+		else
+			this:UnlockHighlight()
+		end
+        self:Search()
+    end)
+
+	-- Link button
+	self.frame.LinkButton = CreateFrame('Button', nil, self.frame, 'UIPanelButtonTemplate')
+	self.frame.LinkButton:SetWidth(52)
+	self.frame.LinkButton:SetHeight(25)
+	self.frame.LinkButton:SetPoint('LEFT', self.frame.DoableButton, 'RIGHT', 2, 0)
+	self.frame.LinkButton:SetText('Link')
+	self.frame.LinkButton:RegisterForClicks('LeftButtonUp', 'RightButtonUp')
+	self.frame.LinkButton:SetScript('OnClick', function() 
+		if StaticPopup_Visible('CRAFTY_LINK') then 
+			StaticPopup_Hide('CRAFTY_LINK')
+		elseif arg1 == 'RightButton' then
+			StaticPopup_Show('CRAFTY_LINK') 
+		end
+
+		if arg1 == 'LeftButton' then
+			local channel = GetNumPartyMembers() == 0 and 'WHISPER' or 'PARTY'
+			if channel == 'PARTY' or ChatEdit_GetLastTellTarget(ChatFrameEditBox) ~= '' then
+				crafty:SendReagentMessage(channel, ChatEdit_GetLastTellTarget(ChatFrameEditBox))
 			end
-            self:Search()
-        end)
-
-		-- Link Reagents button
-		self.frame.LinkReagentButton = CreateFrame('Button', nil, self.frame, 'UIPanelButtonTemplate')
-		self.frame.LinkReagentButton:SetWidth(52)
-		self.frame.LinkReagentButton:SetHeight(25)
-		self.frame.LinkReagentButton:SetPoint('LEFT', self.frame.AvailableOnlyButton, 'RIGHT', 2, 0)
-		self.frame.LinkReagentButton:SetText('Link')
-		self.frame.LinkReagentButton:RegisterForClicks('LeftButtonUp', 'RightButtonUp')
-		self.frame.LinkReagentButton:SetScript('OnClick', function() 
-			if StaticPopup_Visible('CRAFTY_LINK') then 
-				StaticPopup_Hide('CRAFTY_LINK')
-			elseif arg1 == 'RightButton' then
-				StaticPopup_Show('CRAFTY_LINK') 
-			end
-
-			if arg1 == 'LeftButton' then
-				local channel = GetNumPartyMembers() == 0 and 'WHISPER' or 'PARTY'
-				if channel == 'PARTY' or ChatEdit_GetLastTellTarget(ChatFrameEditBox) ~= '' then
-					crafty:SendReagentsMessage(channel, ChatEdit_GetLastTellTarget(ChatFrameEditBox))
-				end
-			end
-		end)
-	end
+		end
+	end)
 end
 
-function crafty:relevel(frame)
+function crafty:Relevel(frame)
 	for _, child in { frame:GetChildren() } do
 		child:SetFrameLevel(frame:GetFrameLevel() + 1)
-		self:relevel(child)
+		self:Relevel(child)
 	end
 end
 
@@ -240,74 +231,67 @@ function crafty:CRAFT_SHOW()
 	end
 
 	self.mode = CRAFT
+	self.currentFrame = self.frames.craft
 
 	-- first time window has been opened
-	if not self.frames.craft.orig_update then
+	if not self.currentFrame.orig_update then
 		self:RegisterEvent('CRAFT_CLOSE')
-		self.frames.craft.orig_update = CraftFrame_Update
+		self.currentFrame.orig_update = CraftFrame_Update
 		CraftFrame_Update = function() self:BuildList(self:GetSearchText()) self:UpdateListing() end
 	end
-	self.frames.craft.orig_update()
-	
-	self.currentFrame = self.frames.craft
-	
+
 	if getglobal(self.frames.trade.elements.Main) and getglobal(self.frames.trade.elements.Main):IsShown() then
 		getglobal(self.frames.trade.elements.Main):Hide()
 	end
-	
-	self.frame:SetParent(self.frames.craft.elements.Main)
-	self:relevel(self.frame)
-	self.frame:ClearAllPoints()
-	self.frame:SetPoint('TOPRIGHT', self.frames.craft.anchor, 'BOTTOMRIGHT', self.frames.craft.anchor_offset_x, self.frames.craft.anchor_offset_y)
 
 	crafty:Show()
 end
 
 function crafty:TRADE_SKILL_SHOW()
 	self.mode = TRADE
+	self.currentFrame = self.frames.trade
 
 	-- first time window has been opened
-	if not self.frames.trade.orig_update then
+	if not self.currentFrame.orig_update then
 		self:RegisterEvent('TRADE_SKILL_CLOSE')
-		self.frames.trade.orig_update = TradeSkillFrame_Update
+		self.currentFrame.orig_update = TradeSkillFrame_Update
 		TradeSkillFrame_Update = function() self:BuildList(self:GetSearchText()) self:UpdateListing() end
 	end
-	self.frames.trade.orig_update()
-		
-	self.currentFrame = self.frames.trade
-	
+
 	if getglobal(self.frames.craft.elements.Main) and getglobal(self.frames.craft.elements.Main):IsShown() then
 		getglobal(self.frames.craft.elements.Main):Hide()
 	end
-	
-	self.frame:SetParent(self.frames.trade.elements.Main)
-	self:relevel(self.frame)
-	self.frame:ClearAllPoints()
-	self.frame:SetPoint('TOPLEFT', self.frames.trade.anchor, 'BOTTOMLEFT', self.frames.trade.anchor_offset_x, self.frames.trade.anchor_offset_y)
 
 	crafty:Show()
 end
 
 function crafty:Show()
+	self.currentFrame.orig_update()
+
+	self.frame:SetParent(self.currentFrame.elements.Main)
+	self:Relevel(self.frame)
+	self.frame:ClearAllPoints()
+	self.frame:SetPoint(unpack(self.currentFrame.anchor))
+
 	self.frame:Show()
-	if self:GetAvailableOnly() then
-		self.frame.AvailableOnlyButton:LockHighlight()
+	if self:GetDoable() then
+		self.frame.DoableButton:LockHighlight()
 	else
-		self.frame.AvailableOnlyButton:UnlockHighlight()
+		self.frame.DoableButton:UnlockHighlight()
 	end
 	self.frame.SearchBox:SetText(self:GetSearchText())
 	self:Search()
 end
 
 function crafty:CRAFT_CLOSE()
-	crafty:OnClose()
+	crafty:Close()
 end
 
 function crafty:TRADE_SKILL_CLOSE()
-	crafty:OnClose()
+	crafty:Close()
 end
 
-function crafty:OnClose()
+function crafty:Close()
 	self.frame:Hide()
 	StaticPopup_Hide('CRAFTY_LINK')
 end
@@ -317,7 +301,7 @@ function crafty:UpdateListing()
 	-- may be disabled from the no results message
 	getglobal((self.mode == CRAFT and 'Craft' or 'TradeSkillSkill')..1):Enable()
 	
-	if (self:GetSearchText() ~= '' or self:GetAvailableOnly()) and getglobal(self.currentFrame.elements.Main):IsShown() then
+	if (self:GetSearchText() ~= '' or self:GetDoable()) and getglobal(self.currentFrame.elements.Main):IsShown() then
 
 		local skillOffset = FauxScrollFrame_GetOffset(getglobal(self.currentFrame.elements.Scroll))	
 		local skillButton
@@ -430,10 +414,6 @@ function crafty:Search()
 	self:UpdateListing()
 end
 
-function crafty:Reset()
-	self.frame.SearchBox:SetText('')
-end
-
 function crafty:SelectionInList(skillOffset)
 	for i=skillOffset + 1, skillOffset + (self.mode == CRAFT and CRAFTS_DISPLAYED or TRADE_SKILLS_DISPLAYED) do
 		if self.found[i] and self.found[i].index == (self.mode == CRAFT and GetCraftSelectionIndex() or GetTradeSkillSelectionIndex()) then
@@ -508,7 +488,7 @@ function crafty:BuildList(searchText)
 
 	local found = {}
 	for _, skill in skills do
-		if skill.rating and (not self:GetAvailableOnly() or skill.available > 0) then
+		if skill.rating and (not self:GetDoable() or skill.available > 0) then
 			found[skill.name] = true
 		end
 	end
@@ -557,7 +537,7 @@ function crafty:BuildList(searchText)
 	end)
 end
 
-function crafty:SendReagentsMessage(channel, who)
+function crafty:SendReagentMessage(channel, who)
 
 	local index = self.mode == CRAFT and GetCraftSelectionIndex() or GetTradeSkillSelectionIndex()
 
