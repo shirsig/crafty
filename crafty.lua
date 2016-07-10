@@ -111,12 +111,12 @@ function crafty:GetSearchText()
 	return crafty:LoadState().searchText
 end
 
-function crafty:SetDoable(doable)
-	crafty:LoadState().doable = doable
+function crafty:SetAvailable(available)
+	crafty:LoadState().available = available
 end
 
-function crafty:GetDoable()
-	return crafty:LoadState().doable
+function crafty:GetAvailable()
+	return crafty:LoadState().available
 end
 
 function crafty:ADDON_LOADED()
@@ -161,7 +161,7 @@ function crafty:ADDON_LOADED()
 	-- Editbox for search text
 	self.frame.SearchBox = CreateFrame('EditBox', nil, self.frame, 'InputBoxTemplate')
 	self.frame.SearchBox:SetAutoFocus(false)
-	self.frame.SearchBox:SetWidth(206)
+	self.frame.SearchBox:SetWidth(204)
 	self.frame.SearchBox:SetHeight(20)
 	self.frame.SearchBox:SetPoint('LEFT', self.frame, 'LEFT', 17, 0)
 	self.frame.SearchBox:SetBackdropColor(TOOLTIP_DEFAULT_COLOR.r, TOOLTIP_DEFAULT_COLOR.g, TOOLTIP_DEFAULT_COLOR.b)
@@ -179,15 +179,15 @@ function crafty:ADDON_LOADED()
 	self.frame.ClearButton:SetText('Clear')
 	self.frame.ClearButton:SetScript('OnClick', function() self.frame.SearchBox:SetText('') end)
 
-	-- Doable Button
-	self.frame.DoableButton = CreateFrame('Button', nil, self.frame, 'UIPanelButtonTemplate')
-	self.frame.DoableButton:SetWidth(52)
-	self.frame.DoableButton:SetHeight(25)
-	self.frame.DoableButton:SetPoint('LEFT', self.frame.SearchBox, 'RIGHT', 2, 0)
-	self.frame.DoableButton:SetText('Doable')
-	self.frame.DoableButton:SetScript('OnClick', function()
-		self:SetDoable(not self:GetDoable())
-		if self:GetDoable() then
+	-- Available Button
+	self.frame.AvailableButton = CreateFrame('Button', nil, self.frame, 'UIPanelButtonTemplate')
+	self.frame.AvailableButton:SetWidth(52)
+	self.frame.AvailableButton:SetHeight(25)
+	self.frame.AvailableButton:SetPoint('LEFT', self.frame.SearchBox, 'RIGHT', 4, 0)
+	self.frame.AvailableButton:SetText('Avail')
+	self.frame.AvailableButton:SetScript('OnClick', function()
+		self:SetAvailable(not self:GetAvailable())
+		if self:GetAvailable() then
 			this:LockHighlight()
 		else
 			this:UnlockHighlight()
@@ -199,7 +199,7 @@ function crafty:ADDON_LOADED()
 	self.frame.LinkButton = CreateFrame('Button', nil, self.frame, 'UIPanelButtonTemplate')
 	self.frame.LinkButton:SetWidth(52)
 	self.frame.LinkButton:SetHeight(25)
-	self.frame.LinkButton:SetPoint('LEFT', self.frame.DoableButton, 'RIGHT', 2, 0)
+	self.frame.LinkButton:SetPoint('LEFT', self.frame.AvailableButton, 'RIGHT', 2, 0)
 	self.frame.LinkButton:SetText('Link')
 	self.frame.LinkButton:RegisterForClicks('LeftButtonUp', 'RightButtonUp')
 	self.frame.LinkButton:SetScript('OnClick', function() 
@@ -274,10 +274,10 @@ function crafty:Show()
 	self.frame:SetPoint(unpack(self.currentFrame.anchor))
 
 	self.frame:Show()
-	if self:GetDoable() then
-		self.frame.DoableButton:LockHighlight()
+	if self:GetAvailable() then
+		self.frame.AvailableButton:LockHighlight()
 	else
-		self.frame.DoableButton:UnlockHighlight()
+		self.frame.AvailableButton:UnlockHighlight()
 	end
 	self.frame.SearchBox:SetText(self:GetSearchText())
 	self:Search()
@@ -301,7 +301,7 @@ function crafty:UpdateListing()
 	-- may be disabled from the no results message
 	getglobal((self.mode == CRAFT and 'Craft' or 'TradeSkillSkill')..1):Enable()
 	
-	if (self:GetSearchText() ~= '' or self:GetDoable()) and getglobal(self.currentFrame.elements.Main):IsShown() then
+	if (self:GetSearchText() ~= '' or self:GetAvailable()) and getglobal(self.currentFrame.elements.Main):IsShown() then
 
 		local skillOffset = FauxScrollFrame_GetOffset(getglobal(self.currentFrame.elements.Scroll))	
 		local skillButton
@@ -488,7 +488,7 @@ function crafty:BuildList(searchText)
 
 	local found = {}
 	for _, skill in skills do
-		if skill.rating and (not self:GetDoable() or skill.available > 0) then
+		if skill.rating and (not self:GetAvailable() or skill.available > 0) then
 			found[skill.name] = true
 		end
 	end
