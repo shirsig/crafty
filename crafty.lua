@@ -398,7 +398,7 @@ function crafty:UpdateListing()
 end
 
 function crafty:Search()
-	self:SetSearchText(self.frame.SearchBox:GetText())
+	self:SetSearchText(self.frame.SearchBox:GetText() or '')
 
 	FauxScrollFrame_SetOffset(getglobal(self.currentFrame.elements.Main), 0)
 	getglobal(self.currentFrame.elements.ScrollBar):SetValue(0)
