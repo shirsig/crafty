@@ -226,7 +226,7 @@ function crafty:Relevel(frame)
 end
 
 function crafty:CRAFT_SHOW()
-	if GetCraftSkillLine(1) ~= 'Enchanting' then
+	if not GetCraftDisplaySkillLine() then
 		return
 	end
 
