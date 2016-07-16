@@ -1,4 +1,4 @@
-local crafty = CreateFrame('Frame', nil, UIParent)
+local crafty = CreateFrame('Frame')
 crafty:SetScript('OnEvent', function()
 	this[event](this)
 end)
@@ -141,16 +141,14 @@ function crafty:ADDON_LOADED()
 	end
 
 	-- Create main frame 
-	self.frame = CreateFrame('Frame', nil, UIParent)
+	self.frame = CreateFrame('Frame')
 	self.frame:Hide()
-	-- Set main frame properties
 	self.frame:SetPoint('CENTER', 'UIParent', 'CENTER', 0, 0)
 	self.frame:SetWidth(342)  
 	self.frame:SetHeight(45)
 	self.frame:SetFrameStrata('MEDIUM')
 	self.frame:SetMovable(false)
 	self.frame:EnableMouse(true)
-	-- Set the main frame backdrop
 	self.frame:SetBackdrop({
 			bgFile = [[Interface\DialogFrame\UI-DialogBox-Background]], tile = true, tileSize = 32,
 			edgeFile = [[Interface\DialogFrame\UI-DialogBox-Border]], edgeSize = 20,
