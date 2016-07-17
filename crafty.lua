@@ -1,4 +1,7 @@
 local crafty = CreateFrame('Frame')
+crafty:SetScript('OnUpdate', function()
+	this:UPDATE()
+end)
 crafty:SetScript('OnEvent', function()
 	this[event](this)
 end)
@@ -119,6 +122,15 @@ function crafty:GetAvailable()
 	return crafty:LoadState().available
 end
 
+-- throttling the update event
+function crafty:UPDATE() 
+	if self.update_required then
+		self.update_required = nil
+		self:BuildList(self:GetSearchText())
+		self:UpdateListing()
+	end
+end
+
 function crafty:ADDON_LOADED()
 	if arg1 ~= 'crafty' then
 		return
@@ -235,7 +247,7 @@ function crafty:CRAFT_SHOW()
 	if not self.currentFrame.orig_update then
 		self:RegisterEvent('CRAFT_CLOSE')
 		self.currentFrame.orig_update = CraftFrame_Update
-		CraftFrame_Update = function() self:BuildList(self:GetSearchText()) self:UpdateListing() end
+		CraftFrame_Update = function() self.update_required = true end
 	end
 
 	if getglobal(self.frames.trade.elements.Main) and getglobal(self.frames.trade.elements.Main):IsShown() then
@@ -253,7 +265,7 @@ function crafty:TRADE_SKILL_SHOW()
 	if not self.currentFrame.orig_update then
 		self:RegisterEvent('TRADE_SKILL_CLOSE')
 		self.currentFrame.orig_update = TradeSkillFrame_Update
-		TradeSkillFrame_Update = function() self:BuildList(self:GetSearchText()) self:UpdateListing() end
+		TradeSkillFrame_Update = function() self.update_required = true end
 	end
 
 	if getglobal(self.frames.craft.elements.Main) and getglobal(self.frames.craft.elements.Main):IsShown() then
