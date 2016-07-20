@@ -450,7 +450,7 @@ function crafty:BuildList(searchText)
 			requires = GetTradeSkillTools(i)
 		end
 
-		local nameRating = matcher(skillName)
+		local nameRating = skillName and matcher(skillName)
 
 		local reagents = {}
 		local reagentsRating
