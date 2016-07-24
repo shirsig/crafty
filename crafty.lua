@@ -480,7 +480,7 @@ function crafty:BuildList(searchText)
 			rating = rating and max(rating, requiresRating) or requiresRating
 		end
 
-		if skillType ~= 'header' then
+		if skillName and skillType ~= 'header' then
 			skills[skillName] = {
 				name			= skillName,
 				type 			= skillType,
