@@ -126,7 +126,6 @@ end
 function crafty:UPDATE() 
 	if self.update_required then
 		self.update_required = nil
-		self:BuildList(self:GetSearchText())
 		self:UpdateListing()
 	end
 end
