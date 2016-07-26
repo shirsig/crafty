@@ -1,7 +1,5 @@
 # crafty - WoW 1.12 addOn 
 
-![Alt text](http://i.imgur.com/wzHbUri.png)
-
 Crafty adds a **fuzzy name search** to the default profession frames. Search results update on the fly and the first result (best match) is selected automatically.
 
 It further adds an **availability filter button** as well as a **reagent link button**.
@@ -15,3 +13,5 @@ Craftable reagents inherit the match ranking of the crafts they're used for, rec
 
 ### Other
 **\<Shift Click>** Copy chat names into the link popup editbox.
+
+![Alt text](http://i.imgur.com/wzHbUri.png)
