@@ -61,7 +61,7 @@ do
 				crafty:SendReagentMessage('WHISPER', ChatEdit_GetLastTellTarget(ChatFrameEditBox))
 			end
 		elseif strlen(input) > 1 then
-			crafty:SendReagentMessage('WHISPER', input)
+			crafty:SendReagentMessage('WHISPER', gsub(input, '^@', ''))
 		end
 	end
 
