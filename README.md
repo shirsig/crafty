@@ -2,7 +2,7 @@
 
 ![Alt text](http://i.imgur.com/wzHbUri.png)
 
-Crafty adds a **fuzzy name search** to the default profession frames. The results automatically update as you type and the first result (best match) is selected automatically.
+Crafty adds a **fuzzy name search** to the default profession frames. Search results update on the fly and the first result (best match) is selected automatically.
 
 It further adds an **availability filter button** as well as a **reagent link button**.
 
