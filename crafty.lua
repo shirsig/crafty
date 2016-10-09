@@ -1,11 +1,11 @@
-local crafty = CreateFrame('Frame')
+local crafty = CreateFrame'Frame'
 crafty:SetScript('OnUpdate', function()
 	this:UPDATE()
 end)
 crafty:SetScript('OnEvent', function()
 	this[event](this)
 end)
-crafty:RegisterEvent('ADDON_LOADED')
+crafty:RegisterEvent'ADDON_LOADED'
 
 local TRADE, CRAFT = 1, 2
 
@@ -39,23 +39,23 @@ do
 	    if tonumber(input) then
 	    	crafty:SendReagentMessage('CHANNEL', input)
 		elseif input == 'guild' or input == 'g' then
-			crafty:SendReagentMessage('GUILD')
+			crafty:SendReagentMessage'GUILD'
 		elseif input == 'o' then
-			crafty:SendReagentMessage('OFFICER')
+			crafty:SendReagentMessage'OFFICER'
 		elseif input == 'raid' or input == 'ra' then
-			crafty:SendReagentMessage('RAID')
+			crafty:SendReagentMessage'RAID'
 		elseif input == 'rw' then
-			crafty:SendReagentMessage('RAID_WARNING')
+			crafty:SendReagentMessage'RAID_WARNING'
 		elseif input == 'bg' then
-			crafty:SendReagentMessage('BATTLEGROUND')
+			crafty:SendReagentMessage'BATTLEGROUND'
 		elseif input == 'party' or input == 'p' then
-			crafty:SendReagentMessage('PARTY')
+			crafty:SendReagentMessage'PARTY'
 		elseif input == 'say' or input == 's' then
-			crafty:SendReagentMessage('SAY')
+			crafty:SendReagentMessage'SAY'
 		elseif input == 'yell' or input == 'y' then
-			crafty:SendReagentMessage('YELL')	
+			crafty:SendReagentMessage'YELL'	
 		elseif input == 'emote' or input == 'em' then
-			crafty:SendReagentMessage('EMOTE')	
+			crafty:SendReagentMessage'EMOTE'	
 		elseif input == 'reply' or input == 'r' then
 			if ChatEdit_GetLastTellTarget(ChatFrameEditBox) ~= '' then
 				crafty:SendReagentMessage('WHISPER', ChatEdit_GetLastTellTarget(ChatFrameEditBox))
@@ -126,6 +126,7 @@ end
 function crafty:UPDATE() 
 	if self.update_required then
 		self.update_required = nil
+		self.currentFrame.orig_update()
 		self:UpdateListing()
 	end
 end
@@ -137,33 +138,33 @@ function crafty:ADDON_LOADED()
 
 	self.found = {}
 
-	self:RegisterEvent('TRADE_SKILL_SHOW')
-	self:RegisterEvent('CRAFT_SHOW')
+	self:RegisterEvent'TRADE_SKILL_SHOW'
+	self:RegisterEvent'CRAFT_SHOW'
 	
 	local origSetItemRef = SetItemRef
 	SetItemRef = function(...)
-		local popup = StaticPopup_FindVisible('CRAFTY_LINK')
+		local popup = StaticPopup_FindVisible'CRAFTY_LINK'
 	    local _, _, playerName = strfind(unpack(arg), 'player:(.+)')
 	    if popup and IsShiftKeyDown() and playerName then
-	    	getglobal(popup:GetName()..'EditBox'):SetText(playerName)
+	    	getglobal(popup:GetName() .. 'EditBox'):SetText(playerName)
 	    	return
 	    end
 	    return origSetItemRef(unpack(arg))
 	end
 
 	-- Create main frame 
-	self.frame = CreateFrame('Frame')
+	self.frame = CreateFrame'Frame'
 	self.frame:Hide()
 	self.frame:SetPoint('CENTER', 'UIParent', 'CENTER', 0, 0)
 	self.frame:SetWidth(342)  
 	self.frame:SetHeight(45)
-	self.frame:SetFrameStrata('MEDIUM')
+	self.frame:SetFrameStrata'MEDIUM'
 	self.frame:SetMovable(false)
 	self.frame:EnableMouse(true)
 	self.frame:SetBackdrop({
 			bgFile = [[Interface\DialogFrame\UI-DialogBox-Background]], tile = true, tileSize = 32,
 			edgeFile = [[Interface\DialogFrame\UI-DialogBox-Border]], edgeSize = 20,
-			insets = {left = 5, right = 6, top = 6, bottom = 5},
+			insets = { left=5, right=6, top=6, bottom=5 },
 	})
 	
 	-- Create sub-frames
@@ -185,7 +186,7 @@ function crafty:ADDON_LOADED()
 	self.frame.ClearButton:SetWidth(20)
 	self.frame.ClearButton:SetHeight(20)
 	self.frame.ClearButton:SetPoint('RIGHT', self.frame.SearchBox, 'RIGHT')
-	self.frame.ClearButton:SetText('Clear')
+	self.frame.ClearButton:SetText'Clear'
 	self.frame.ClearButton:SetScript('OnClick', function() self.frame.SearchBox:SetText('') end)
 
 	-- Available Button
@@ -193,7 +194,7 @@ function crafty:ADDON_LOADED()
 	self.frame.AvailableButton:SetWidth(52)
 	self.frame.AvailableButton:SetHeight(25)
 	self.frame.AvailableButton:SetPoint('LEFT', self.frame.SearchBox, 'RIGHT', 4, 0)
-	self.frame.AvailableButton:SetText('Avail')
+	self.frame.AvailableButton:SetText'Avail'
 	self.frame.AvailableButton:SetScript('OnClick', function()
 		self:SetAvailable(not self:GetAvailable())
 		if self:GetAvailable() then
@@ -209,13 +210,13 @@ function crafty:ADDON_LOADED()
 	self.frame.LinkButton:SetWidth(52)
 	self.frame.LinkButton:SetHeight(25)
 	self.frame.LinkButton:SetPoint('LEFT', self.frame.AvailableButton, 'RIGHT', 2, 0)
-	self.frame.LinkButton:SetText('Link')
+	self.frame.LinkButton:SetText'Link'
 	self.frame.LinkButton:RegisterForClicks('LeftButtonUp', 'RightButtonUp')
 	self.frame.LinkButton:SetScript('OnClick', function() 
-		if StaticPopup_Visible('CRAFTY_LINK') then 
-			StaticPopup_Hide('CRAFTY_LINK')
+		if StaticPopup_Visible'CRAFTY_LINK' then 
+			StaticPopup_Hide'CRAFTY_LINK'
 		elseif arg1 == 'RightButton' then
-			StaticPopup_Show('CRAFTY_LINK') 
+			StaticPopup_Show'CRAFTY_LINK'
 		end
 
 		if arg1 == 'LeftButton' then
@@ -228,7 +229,7 @@ function crafty:ADDON_LOADED()
 end
 
 function crafty:Relevel(frame)
-	for _, child in { frame:GetChildren() } do
+	for _, child in {frame:GetChildren()} do
 		child:SetFrameLevel(frame:GetFrameLevel() + 1)
 		self:Relevel(child)
 	end
@@ -244,7 +245,7 @@ function crafty:CRAFT_SHOW()
 
 	-- first time window has been opened
 	if not self.currentFrame.orig_update then
-		self:RegisterEvent('CRAFT_CLOSE')
+		self:RegisterEvent'CRAFT_CLOSE'
 		self.currentFrame.orig_update = CraftFrame_Update
 		CraftFrame_Update = function() self.update_required = true end
 	end
@@ -262,7 +263,7 @@ function crafty:TRADE_SKILL_SHOW()
 
 	-- first time window has been opened
 	if not self.currentFrame.orig_update then
-		self:RegisterEvent('TRADE_SKILL_CLOSE')
+		self:RegisterEvent'TRADE_SKILL_CLOSE'
 		self.currentFrame.orig_update = TradeSkillFrame_Update
 		TradeSkillFrame_Update = function() self.update_required = true end
 	end
@@ -302,13 +303,13 @@ end
 
 function crafty:Close()
 	self.frame:Hide()
-	StaticPopup_Hide('CRAFTY_LINK')
+	StaticPopup_Hide'CRAFTY_LINK'
 end
 
 function crafty:UpdateListing()
 
 	-- may be disabled from the no results message
-	getglobal((self.mode == CRAFT and 'Craft' or 'TradeSkillSkill')..1):Enable()
+	getglobal((self.mode == CRAFT and 'Craft' or 'TradeSkillSkill') .. 1):Enable()
 	
 	if (self:GetSearchText() ~= '' or self:GetAvailable()) and getglobal(self.currentFrame.elements.Main):IsShown() then
 
@@ -319,8 +320,8 @@ function crafty:UpdateListing()
 						
 		if self.mode == TRADE then
 			getglobal(self.frames.trade.elements.CollapseAll):Disable();
-			for i=1, TRADE_SKILLS_DISPLAYED, 1 do
-				getglobal('TradeSkillSkill'..i..'Text'):SetPoint('TOPLEFT', 'TradeSkillSkill'..i, 'TOPLEFT', 3, 0)
+			for i = 1, TRADE_SKILLS_DISPLAYED do
+				getglobal('TradeSkillSkill' .. i .. 'Text'):SetPoint('TOPLEFT', 'TradeSkillSkill' .. i, 'TOPLEFT', 3, 0)
 			end
 		end
 		
@@ -329,9 +330,9 @@ function crafty:UpdateListing()
 		
 		if getn(self.found) > 0 then
 					
-			for i=1,self.mode == CRAFT and CRAFTS_DISPLAYED or TRADE_SKILLS_DISPLAYED do
+			for i = 1, self.mode == CRAFT and CRAFTS_DISPLAYED or TRADE_SKILLS_DISPLAYED do
 				local skillIndex = i + skillOffset
-				skillButton = getglobal((self.mode == CRAFT and 'Craft' or 'TradeSkillSkill')..i)
+				skillButton = getglobal((self.mode == CRAFT and 'Craft' or 'TradeSkillSkill') .. i)
 				
 				if self.found[skillIndex] then
 					if getglobal(self.currentFrame.elements.Scroll):IsVisible() then
@@ -352,11 +353,11 @@ function crafty:UpdateListing()
 					end
 					
 					skillButton:SetNormalTexture('')
-					getglobal((self.mode == CRAFT and 'Craft' or 'TradeSkillSkill')..i..'Highlight'):SetTexture('')
+					getglobal((self.mode == CRAFT and 'Craft' or 'TradeSkillSkill') .. i .. 'Highlight'):SetTexture''
 					if self.found[skillIndex].available == 0 then
-						skillButton:SetText(' '..self.found[skillIndex].name)
+						skillButton:SetText(' ' .. self.found[skillIndex].name)
 					else
-						skillButton:SetText(' '.. self.found[skillIndex].name ..' ['.. self.found[skillIndex].available ..']')
+						skillButton:SetText(' ' .. self.found[skillIndex].name .. ' [' .. self.found[skillIndex].available .. ']')
 					end
 					
 					if (self.mode == CRAFT and GetCraftSelectionIndex() or GetTradeSkillSelectionIndex()) == self.found[skillIndex].index then
@@ -386,7 +387,7 @@ function crafty:UpdateListing()
 					skillButton:SetWidth(323)
 					skillButton:SetDisabledTextColor(1, 1, 1)
 					skillButton:SetDisabledTexture('')
-					skillButton:SetText('No results matched your search.')
+					skillButton:SetText'No results matched your search.'
 					skillButton:UnlockHighlight()
 					skillButton:Show()
 				else
@@ -398,8 +399,8 @@ function crafty:UpdateListing()
 		if self.mode == CRAFT then
 			self.frames.craft.orig_update()
 		elseif self.mode == TRADE then
-			for i=1, TRADE_SKILLS_DISPLAYED, 1 do
-				getglobal('TradeSkillSkill'..i..'Text'):SetPoint('TOPLEFT', 'TradeSkillSkill'..i, 'TOPLEFT', 21, 0)
+			for i = 1, TRADE_SKILLS_DISPLAYED do
+				getglobal('TradeSkillSkill' .. i .. 'Text'):SetPoint('TOPLEFT', 'TradeSkillSkill' .. i, 'TOPLEFT', 21, 0)
 			end
 			self.frames.trade.orig_update()
 		end
@@ -424,7 +425,7 @@ function crafty:Search()
 end
 
 function crafty:SelectionInList(skillOffset)
-	for i=skillOffset + 1, skillOffset + (self.mode == CRAFT and CRAFTS_DISPLAYED or TRADE_SKILLS_DISPLAYED) do
+	for i = skillOffset + 1, skillOffset + (self.mode == CRAFT and CRAFTS_DISPLAYED or TRADE_SKILLS_DISPLAYED) do
 		if self.found[i] and self.found[i].index == (self.mode == CRAFT and GetCraftSelectionIndex() or GetTradeSkillSelectionIndex()) then
 			return true
 		end
@@ -439,7 +440,7 @@ function crafty:BuildList(searchText)
 
 	local matcher = self:FuzzyMatcher(searchText)
 	
-	for i=1,self.mode == CRAFT and GetNumCrafts() or GetNumTradeSkills() do
+	for i = 1, self.mode == CRAFT and GetNumCrafts() or GetNumTradeSkills() do
 		local skillName, skillType, numAvailable, isExpanded, requires
 		if self.mode == CRAFT then
 			skillName, _, skillType, numAvailable, isExpanded = GetCraftInfo(i)
@@ -453,12 +454,12 @@ function crafty:BuildList(searchText)
 
 		local reagents = {}
 		local reagentsRating
-		for j=1,self.mode == CRAFT and GetCraftNumReagents(i) or GetTradeSkillNumReagents(i), 1 do
+		for j = 1, self.mode == CRAFT and GetCraftNumReagents(i) or GetTradeSkillNumReagents(i) do
 			local reagentName
 			if self.mode == CRAFT then
-				reagentName, _, _, _ = GetCraftReagentInfo(i, j)
+				reagentName = GetCraftReagentInfo(i, j)
 			elseif self.mode == TRADE then
-				reagentName, _, _, _ = GetTradeSkillReagentInfo(i, j)
+				reagentName = GetTradeSkillReagentInfo(i, j)
 			end
 			
 			tinsert(reagents, reagentName)
@@ -556,10 +557,10 @@ function crafty:SendReagentMessage(channel, who)
 
 	local message = {}
 
-	local messagePart = (self.mode == CRAFT and GetCraftItemLink(index) or GetTradeSkillItemLink(index))..' ='
-	for i=1,self.mode == CRAFT and GetCraftNumReagents(index) or GetTradeSkillNumReagents(index) do
+	local messagePart = (self.mode == CRAFT and GetCraftItemLink(index) or GetTradeSkillItemLink(index)) .. ' ='
+	for i = 1, self.mode == CRAFT and GetCraftNumReagents(index) or GetTradeSkillNumReagents(index) do
 		local reagentLink = self.mode == CRAFT and GetCraftReagentItemLink(index, i) or GetTradeSkillReagentItemLink(index, i)
-		local reagentCount = (self.mode == CRAFT and { GetCraftReagentInfo(index, i) } or { GetTradeSkillReagentInfo(index, i) })[3]
+		local reagentCount = (self.mode == CRAFT and {GetCraftReagentInfo(index, i)} or {GetTradeSkillReagentInfo(index, i)})[3]
 
 		if not reagentLink then
 			return
@@ -574,28 +575,28 @@ function crafty:SendReagentMessage(channel, who)
 			tinsert(message, messagePart)
 			messagePart = '(cont.)'
 		end
-		messagePart = messagePart..' '..reagentInfo
+		messagePart = messagePart .. ' ' .. reagentInfo
 	end
 	tinsert(message, messagePart)
 
 	for _, part in ipairs(message) do
-		SendChatMessage(part, channel, GetDefaultLanguage('player'), who)
+		SendChatMessage(part, channel, GetDefaultLanguage'player', who)
 	end
 end
 
 function crafty:FuzzyMatcher(input)
 	local uppercaseInput = strupper(input)
 	local pattern = '(.*)'
-	for i=1,strlen(uppercaseInput) do
+	for i = 1, strlen(uppercaseInput) do
 		if strfind(strsub(uppercaseInput, i, i), '%w') or strfind(strsub(uppercaseInput, i, i), '%s') then
 			pattern = pattern .. strsub(uppercaseInput, i, i) .. '(.-)'
  		end
 	end
 	return function(candidate)
-		local match = { strfind(strupper(candidate), pattern) }
+		local match = {strfind(strupper(candidate), pattern)}
 		if match[1] then
 			local rating = 0
-			for i=4,getn(match)-1 do
+			for i = 4, getn(match) - 1 do
 				if strlen(match[i]) == 0 then
 					rating = rating + 1
 				end
