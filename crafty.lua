@@ -167,35 +167,102 @@ function crafty:ADDON_LOADED()
 			insets = { left=5, right=6, top=6, bottom=5 },
 	})
 	
-	-- Create sub-frames
-	-- Editbox for search text
-	self.frame.SearchBox = CreateFrame('EditBox', nil, self.frame, 'InputBoxTemplate')
-	self.frame.SearchBox:SetAutoFocus(false)
-	self.frame.SearchBox:SetWidth(204)
-	self.frame.SearchBox:SetHeight(20)
-	self.frame.SearchBox:SetPoint('LEFT', self.frame, 'LEFT', 17, 0)
-	self.frame.SearchBox:SetBackdropColor(TOOLTIP_DEFAULT_COLOR.r, TOOLTIP_DEFAULT_COLOR.g, TOOLTIP_DEFAULT_COLOR.b)
-	self.frame.SearchBox:SetBackdropBorderColor(TOOLTIP_DEFAULT_BACKGROUND_COLOR.r, TOOLTIP_DEFAULT_BACKGROUND_COLOR.g, TOOLTIP_DEFAULT_BACKGROUND_COLOR.b)
-	self.frame.SearchBox:SetScript('OnTextChanged', function() self:Search() end)
-	self.frame.SearchBox:SetScript('OnEnterPressed', function()
+	local searchBox = CreateFrame('EditBox', nil, self.frame, 'InputBoxTemplate')
+	self.frame.SearchBox = searchBox
+	searchBox:SetTextInsets(16, 20, 0, 0)
+	-- self.Instructions:SetText(SEARCH);
+	-- self.Instructions:ClearAllPoints();
+	-- self.Instructions:SetPoint("TOPLEFT", self, "TOPLEFT", 16, 0);
+	-- self.Instructions:SetPoint("BOTTOMRIGHT", self, "BOTTOMRIGHT", -20, 0);
+	searchBox:SetAutoFocus(false)
+	searchBox:SetWidth(204)
+	searchBox:SetHeight(20)
+	searchBox:SetPoint('LEFT', self.frame, 'LEFT', 17, 0)
+	searchBox:SetBackdropColor(TOOLTIP_DEFAULT_COLOR.r, TOOLTIP_DEFAULT_COLOR.g, TOOLTIP_DEFAULT_COLOR.b)
+	searchBox:SetBackdropBorderColor(TOOLTIP_DEFAULT_BACKGROUND_COLOR.r, TOOLTIP_DEFAULT_BACKGROUND_COLOR.g, TOOLTIP_DEFAULT_BACKGROUND_COLOR.b)
+	searchBox:SetScript('OnEnterPressed', function()
 		this:ClearFocus()
 	end)
-
-	-- Clear Button
-	self.frame.ClearButton = CreateFrame('Button', nil, self.frame.SearchBox, 'UIPanelCloseButton')
-	self.frame.ClearButton:SetWidth(20)
-	self.frame.ClearButton:SetHeight(20)
-	self.frame.ClearButton:SetPoint('RIGHT', self.frame.SearchBox, 'RIGHT')
-	self.frame.ClearButton:SetText'Clear'
-	self.frame.ClearButton:SetScript('OnClick', function() self.frame.SearchBox:SetText('') end)
+	do
+		local instructions = searchBox:CreateFontString(nil, 'ARTWORK')
+		instructions:SetPoint('TOPLEFT', searchBox, 'TOPLEFT', 16, 0)
+		instructions:SetPoint('BOTTOMRIGHT', searchBox, 'BOTTOMRIGHT', -20, 0)
+		instructions:SetJustifyH'LEFT'
+		instructions:SetFontObject(GameFontDisableSmall)
+		instructions:SetTextColor(.35, .35, .35)
+		instructions:SetText'Search'
+		local searchIcon = searchBox:CreateTexture(nil, 'OVERLAY')
+		searchIcon:SetTexture[[Interface\AddOns\!bagsearch\UI-Searchbox-Icon]]
+		searchIcon:SetPoint('LEFT', 0, -2)
+		searchIcon:SetWidth(14)
+		searchIcon:SetHeight(14)
+		searchIcon:SetVertexColor(.6, .6, .6)
+		local clearButton = CreateFrame('Button', nil, searchBox)
+		clearButton:SetPoint('RIGHT', -3, 0)
+		clearButton:SetWidth(17)
+		clearButton:SetHeight(17)
+		do
+			local tex = clearButton:CreateTexture(nil, 'ARTWORK')
+			tex:SetTexture[[Interface\AddOns\!bagsearch\ClearBroadcastIcon]]
+			tex:SetPoint('TOPLEFT', 0, 0)
+			tex:SetWidth(17)
+			tex:SetHeight(17)
+			tex:SetAlpha(.5)
+			clearButton.tex = tex
+		end
+		clearButton:SetScript('OnEnter', function()
+			this.tex:SetAlpha(1)
+		end)
+		clearButton:SetScript('OnLeave', function()
+			this.tex:SetAlpha(.5)
+		end)
+		clearButton:SetScript('OnMouseUp', function()
+			this.tex:SetPoint('TOPLEFT', 0, 0)
+		end)
+		clearButton:SetScript('OnMouseDown', function()
+			this.tex:SetPoint('TOPLEFT', 1, -1)
+		end)
+		clearButton:SetScript('OnClick', function()
+			PlaySound'igMainMenuOptionCheckBoxOn'
+			searchBox:SetText''
+			searchBox:ClearFocus()
+		end)
+		searchBox:SetScript('OnEditFocusGained', function()
+			this.focused = true
+			searchIcon:SetVertexColor(1, 1, 1)
+			clearButton:Show()
+		end)
+		searchBox:SetScript('OnEditFocusLost', function()
+			this.focused = false
+			if this:GetText() == '' then
+				searchIcon:SetVertexColor(.6, .6, .6)
+				clearButton:Hide()
+			end
+		end)
+		searchBox:SetScript('OnTextChanged', function()
+			if this:GetText() == '' then
+				instructions:Show()
+			else
+				instructions:Hide()
+			end
+			if this:GetText() == '' and not this.focused then
+				searchIcon:SetVertexColor(.6, .6, .6)
+				clearButton:Hide()
+			else
+				searchIcon:SetVertexColor(1, 1, 1)
+				clearButton:Show()	
+			end
+			self:Search()
+		end)
+	end
 
 	-- Available Button
-	self.frame.AvailableButton = CreateFrame('Button', nil, self.frame, 'UIPanelButtonTemplate')
-	self.frame.AvailableButton:SetWidth(52)
-	self.frame.AvailableButton:SetHeight(25)
-	self.frame.AvailableButton:SetPoint('LEFT', self.frame.SearchBox, 'RIGHT', 4, 0)
-	self.frame.AvailableButton:SetText'Avail'
-	self.frame.AvailableButton:SetScript('OnClick', function()
+	self.frame.MaterialsButton = CreateFrame('Button', nil, self.frame, 'UIPanelButtonTemplate')
+	self.frame.MaterialsButton:SetWidth(52)
+	self.frame.MaterialsButton:SetHeight(25)
+	self.frame.MaterialsButton:SetPoint('LEFT', searchBox, 'RIGHT', 4, 0)
+	self.frame.MaterialsButton:SetText'Mats'
+	self.frame.MaterialsButton:SetScript('OnClick', function()
 		self:SetAvailable(not self:GetAvailable())
 		if self:GetAvailable() then
 			this:LockHighlight()
@@ -209,7 +276,7 @@ function crafty:ADDON_LOADED()
 	self.frame.LinkButton = CreateFrame('Button', nil, self.frame, 'UIPanelButtonTemplate')
 	self.frame.LinkButton:SetWidth(52)
 	self.frame.LinkButton:SetHeight(25)
-	self.frame.LinkButton:SetPoint('LEFT', self.frame.AvailableButton, 'RIGHT', 2, 0)
+	self.frame.LinkButton:SetPoint('LEFT', self.frame.MaterialsButton, 'RIGHT', 2, 0)
 	self.frame.LinkButton:SetText'Link'
 	self.frame.LinkButton:RegisterForClicks('LeftButtonUp', 'RightButtonUp')
 	self.frame.LinkButton:SetScript('OnClick', function() 
@@ -285,9 +352,9 @@ function crafty:Show()
 
 	self.frame:Show()
 	if self:GetAvailable() then
-		self.frame.AvailableButton:LockHighlight()
+		self.frame.MaterialsButton:LockHighlight()
 	else
-		self.frame.AvailableButton:UnlockHighlight()
+		self.frame.MaterialsButton:UnlockHighlight()
 	end
 	self.frame.SearchBox:SetText(self:GetSearchText())
 	self:Search()
