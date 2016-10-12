@@ -146,7 +146,7 @@ function crafty:ADDON_LOADED()
 		local popup = StaticPopup_FindVisible'CRAFTY_LINK'
 	    local _, _, playerName = strfind(unpack(arg), 'player:(.+)')
 	    if popup and IsShiftKeyDown() and playerName then
-	    	getglobal(popup:GetName() .. 'EditBox'):SetText(playerName)
+	    	getglobal(popup:GetName()..'EditBox'):SetText(playerName)
 	    	return
 	    end
 	    return origSetItemRef(unpack(arg))
@@ -164,7 +164,7 @@ function crafty:ADDON_LOADED()
 	self.frame:SetBackdrop({
 			bgFile = [[Interface\DialogFrame\UI-DialogBox-Background]], tile = true, tileSize = 32,
 			edgeFile = [[Interface\DialogFrame\UI-DialogBox-Border]], edgeSize = 20,
-			insets = { left=5, right=6, top=6, bottom=5 },
+			insets = {left=5, right=6, top=6, bottom=5},
 	})
 	
 	local searchBox = CreateFrame('EditBox', nil, self.frame, 'InputBoxTemplate')
@@ -376,7 +376,7 @@ end
 function crafty:UpdateListing()
 
 	-- may be disabled from the no results message
-	getglobal((self.mode == CRAFT and 'Craft' or 'TradeSkillSkill') .. 1):Enable()
+	getglobal((self.mode == CRAFT and 'Craft' or 'TradeSkillSkill')..1):Enable()
 	
 	if (self:GetSearchText() ~= '' or self:GetAvailable()) and getglobal(self.currentFrame.elements.Main):IsShown() then
 
@@ -388,7 +388,7 @@ function crafty:UpdateListing()
 		if self.mode == TRADE then
 			getglobal(self.frames.trade.elements.CollapseAll):Disable();
 			for i = 1, TRADE_SKILLS_DISPLAYED do
-				getglobal('TradeSkillSkill' .. i .. 'Text'):SetPoint('TOPLEFT', 'TradeSkillSkill' .. i, 'TOPLEFT', 3, 0)
+				getglobal('TradeSkillSkill'..i..'Text'):SetPoint('TOPLEFT', 'TradeSkillSkill'..i, 'TOPLEFT', 3, 0)
 			end
 		end
 		
@@ -399,7 +399,7 @@ function crafty:UpdateListing()
 					
 			for i = 1, self.mode == CRAFT and CRAFTS_DISPLAYED or TRADE_SKILLS_DISPLAYED do
 				local skillIndex = i + skillOffset
-				skillButton = getglobal((self.mode == CRAFT and 'Craft' or 'TradeSkillSkill') .. i)
+				skillButton = getglobal((self.mode == CRAFT and 'Craft' or 'TradeSkillSkill')..i)
 				
 				if self.found[skillIndex] then
 					if getglobal(self.currentFrame.elements.Scroll):IsVisible() then
@@ -420,11 +420,11 @@ function crafty:UpdateListing()
 					end
 					
 					skillButton:SetNormalTexture('')
-					getglobal((self.mode == CRAFT and 'Craft' or 'TradeSkillSkill') .. i .. 'Highlight'):SetTexture''
+					getglobal((self.mode == CRAFT and 'Craft' or 'TradeSkillSkill')..i..'Highlight'):SetTexture''
 					if self.found[skillIndex].available == 0 then
-						skillButton:SetText(' ' .. self.found[skillIndex].name)
+						skillButton:SetText(' '..self.found[skillIndex].name)
 					else
-						skillButton:SetText(' ' .. self.found[skillIndex].name .. ' [' .. self.found[skillIndex].available .. ']')
+						skillButton:SetText(' '..self.found[skillIndex].name..' ['..self.found[skillIndex].available..']')
 					end
 					
 					if (self.mode == CRAFT and GetCraftSelectionIndex() or GetTradeSkillSelectionIndex()) == self.found[skillIndex].index then
@@ -467,7 +467,7 @@ function crafty:UpdateListing()
 			self.frames.craft.orig_update()
 		elseif self.mode == TRADE then
 			for i = 1, TRADE_SKILLS_DISPLAYED do
-				getglobal('TradeSkillSkill' .. i .. 'Text'):SetPoint('TOPLEFT', 'TradeSkillSkill' .. i, 'TOPLEFT', 21, 0)
+				getglobal('TradeSkillSkill'..i..'Text'):SetPoint('TOPLEFT', 'TradeSkillSkill'..i, 'TOPLEFT', 21, 0)
 			end
 			self.frames.trade.orig_update()
 		end
@@ -624,7 +624,7 @@ function crafty:SendReagentMessage(channel, who)
 
 	local message = {}
 
-	local messagePart = (self.mode == CRAFT and GetCraftItemLink(index) or GetTradeSkillItemLink(index)) .. ' ='
+	local messagePart = (self.mode == CRAFT and GetCraftItemLink(index) or GetTradeSkillItemLink(index))..' ='
 	for i = 1, self.mode == CRAFT and GetCraftNumReagents(index) or GetTradeSkillNumReagents(index) do
 		local reagentLink = self.mode == CRAFT and GetCraftReagentItemLink(index, i) or GetTradeSkillReagentItemLink(index, i)
 		local reagentCount = (self.mode == CRAFT and {GetCraftReagentInfo(index, i)} or {GetTradeSkillReagentInfo(index, i)})[3]
@@ -634,7 +634,7 @@ function crafty:SendReagentMessage(channel, who)
 		end
 
 		local reagentInfo = format(
-			'%s x%i',
+			'%sx%i',
 			reagentLink,
 			reagentCount
 		)
@@ -642,7 +642,7 @@ function crafty:SendReagentMessage(channel, who)
 			tinsert(message, messagePart)
 			messagePart = '(cont.)'
 		end
-		messagePart = messagePart .. ' ' .. reagentInfo
+		messagePart = messagePart..' '..reagentInfo
 	end
 	tinsert(message, messagePart)
 
@@ -656,7 +656,7 @@ function crafty:FuzzyMatcher(input)
 	local pattern = '(.*)'
 	for i = 1, strlen(uppercaseInput) do
 		if strfind(strsub(uppercaseInput, i, i), '%w') or strfind(strsub(uppercaseInput, i, i), '%s') then
-			pattern = pattern .. strsub(uppercaseInput, i, i) .. '(.-)'
+			pattern = pattern..strsub(uppercaseInput, i, i)..'(.-)'
  		end
 	end
 	return function(candidate)
