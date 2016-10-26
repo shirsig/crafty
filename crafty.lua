@@ -192,7 +192,7 @@ function crafty:ADDON_LOADED()
 		instructions:SetTextColor(.35, .35, .35)
 		instructions:SetText'Search'
 		local searchIcon = searchBox:CreateTexture(nil, 'OVERLAY')
-		searchIcon:SetTexture[[Interface\AddOns\!bagsearch\UI-Searchbox-Icon]]
+		searchIcon:SetTexture[[Interface\AddOns\crafty\UI-Searchbox-Icon]]
 		searchIcon:SetPoint('LEFT', 0, -2)
 		searchIcon:SetWidth(14)
 		searchIcon:SetHeight(14)
@@ -203,7 +203,7 @@ function crafty:ADDON_LOADED()
 		clearButton:SetHeight(17)
 		do
 			local tex = clearButton:CreateTexture(nil, 'ARTWORK')
-			tex:SetTexture[[Interface\AddOns\!bagsearch\ClearBroadcastIcon]]
+			tex:SetTexture[[Interface\AddOns\crafty\ClearBroadcastIcon]]
 			tex:SetPoint('TOPLEFT', 0, 0)
 			tex:SetWidth(17)
 			tex:SetHeight(17)
