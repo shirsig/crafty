@@ -1,6 +1,7 @@
 ## Interface: 11200
 ## Author: shirsig
 ## Title: crafty
+## Notes: Profession window extension
 ## Version: 1.0
 ## LoadOnDemand: 1
 ## LoadWith: Blizzard_TradeSkillUI, Blizzard_CraftUI
