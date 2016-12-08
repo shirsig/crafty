@@ -315,6 +315,11 @@ function crafty:CRAFT_SHOW()
 		self:RegisterEvent'CRAFT_CLOSE'
 		self.currentFrame.orig_update = CraftFrame_Update
 		CraftFrame_Update = function() self.update_required = true end
+		for i = 1, 8 do
+			getglobal('Craft'..i):SetScript('OnDoubleClick', function()
+				self.frame.SearchBox:SetText(strsub(this:GetText(), 2))
+			end)
+		end
 	end
 
 	if getglobal(self.frames.trade.elements.Main) and getglobal(self.frames.trade.elements.Main):IsShown() then
@@ -333,6 +338,11 @@ function crafty:TRADE_SKILL_SHOW()
 		self:RegisterEvent'TRADE_SKILL_CLOSE'
 		self.currentFrame.orig_update = TradeSkillFrame_Update
 		TradeSkillFrame_Update = function() self.update_required = true end
+		for i = 1, 8 do
+			getglobal('TradeSkillSkill'..i):SetScript('OnDoubleClick', function()
+				self.frame.SearchBox:SetText(strsub(this:GetText(), 2))
+			end)
+		end
 	end
 
 	if getglobal(self.frames.craft.elements.Main) and getglobal(self.frames.craft.elements.Main):IsShown() then
@@ -654,9 +664,11 @@ end
 function crafty:FuzzyMatcher(input)
 	local uppercaseInput = strupper(input)
 	local pattern = '(.*)'
+	local captures = 0
 	for i = 1, strlen(uppercaseInput) do
 		if strfind(strsub(uppercaseInput, i, i), '%w') or strfind(strsub(uppercaseInput, i, i), '%s') then
-			pattern = pattern..strsub(uppercaseInput, i, i)..'(.-)'
+			pattern = pattern..strsub(uppercaseInput, i, i)..(captures > 30 and '.-' or '(.-)')
+			captures = captures + 1
  		end
 	end
 	return function(candidate)
