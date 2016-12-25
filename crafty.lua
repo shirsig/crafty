@@ -317,7 +317,7 @@ function crafty:CRAFT_SHOW()
 		CraftFrame_Update = function() self.update_required = true end
 		for i = 1, 8 do
 			getglobal('Craft'..i):SetScript('OnDoubleClick', function()
-				self.frame.SearchBox:SetText(strsub(this:GetText(), 2))
+				self.frame.SearchBox:SetText(this.skill.name)
 			end)
 		end
 	end
@@ -412,6 +412,7 @@ function crafty:UpdateListing()
 				skillButton = getglobal((self.mode == CRAFT and 'Craft' or 'TradeSkillSkill')..i)
 				
 				if self.found[skillIndex] then
+					skillButton.skill = self.found[skillIndex]
 					if getglobal(self.currentFrame.elements.Scroll):IsVisible() then
 						skillButton:SetWidth(293)
 					else
