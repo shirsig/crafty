@@ -340,7 +340,7 @@ function crafty:TRADE_SKILL_SHOW()
 		TradeSkillFrame_Update = function() self.update_required = true end
 		for i = 1, 8 do
 			getglobal('TradeSkillSkill'..i):SetScript('OnDoubleClick', function()
-				self.frame.SearchBox:SetText(strsub(this:GetText(), 2))
+				self.frame.SearchBox:SetText(this.skill.name)
 			end)
 		end
 	end
