@@ -14,4 +14,4 @@ Craftable reagents inherit the match ranking of the crafts they're used for, rec
 ### Other
 **\<Shift Click>** Copy chat names into the link popup editbox.
 
-![Alt text](http://i.imgur.com/wzHbUri.png)
+![Alt text](http://i.imgur.com/ylCttdk.png)
