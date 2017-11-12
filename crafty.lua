@@ -11,6 +11,8 @@ crafty_favorites = {}
 
 local TRADE, CRAFT = 1, 2
 
+local SHIFT
+
 crafty.frames = {
 	trade = {
 		elements = {
@@ -90,28 +92,33 @@ do
 	}
 end
 
-function crafty:LoadState()
-	self.state = self.state or {}
+do
+	local state = {}
+	function crafty:State()
+		local profession
+		if self.mode == TRADE then
+			profession = GetTradeSkillLine()
+		elseif self.mode == CRAFT then
+			profession = GetCraftSkillLine(1)
+		end
+		profession = profession or '' -- TODO better solution
 
-	local profession
-	if self.mode == TRADE then
-		profession = GetTradeSkillLine()
-	elseif self.mode == CRAFT then
-		profession = GetCraftSkillLine(1)
+		crafty_favorites[profession] = crafty_favorites[profession] or {}
+		state[profession] = state[profession] or {
+			searchText = '',
+			materials = false,
+			favorites = crafty_favorites[profession],
+		}
+		return state[profession]
 	end
-	profession = profession or '' -- TODO better solution
-
-	crafty_favorites[profession] = crafty_favorites[profession] or {}
-	self.state[profession] = self.state[profession] or {
-		searchText = '',
-		materials = false,
-		favorites = crafty_favorites[profession],
-	}
-	return self.state[profession]
 end
 
 -- throttling the update event
-function crafty:UPDATE() 
+function crafty:UPDATE()
+	if IsShiftKeyDown() ~= SHIFT then
+		SHIFT = IsShiftKeyDown()
+		self.update_required = true
+	end
 	if self.update_required then
 		self.update_required = nil
 		self.currentFrame.orig_update()
@@ -247,8 +254,8 @@ function crafty:ADDON_LOADED()
 	self.frame.MaterialsButton:SetPoint('LEFT', searchBox, 'RIGHT', 4, 0)
 	self.frame.MaterialsButton:SetText'Mats'
 	self.frame.MaterialsButton:SetScript('OnClick', function()
-		self:LoadState().materials = not self:LoadState().materials
-		if self:LoadState().materials then
+		self:State().materials = not self:State().materials
+		if self:State().materials then
 			this:LockHighlight()
 		else
 			this:UnlockHighlight()
@@ -305,7 +312,7 @@ function crafty:CRAFT_SHOW()
 			end)
 			getglobal('Craft'..i):SetScript('OnMouseDown', function()
 				if arg1 == 'RightButton' then
-					local favorites, name = self:LoadState().favorites, GetCraftInfo(this:GetID())
+					local favorites, name = self:State().favorites, GetCraftInfo(this:GetID())
 					favorites[name] = not favorites[name] or nil
 					self:Search()
 				end
@@ -335,7 +342,7 @@ function crafty:TRADE_SKILL_SHOW()
 			end)
 			getglobal('TradeSkillSkill'..i):SetScript('OnMouseDown', function()
 				if arg1 == 'RightButton' then
-					local favorites, name = self:LoadState().favorites, GetTradeSkillInfo(this:GetID())
+					local favorites, name = self:State().favorites, GetTradeSkillInfo(this:GetID())
 					favorites[name] = not favorites[name] or nil
 					self:Search()
 				end
@@ -359,12 +366,12 @@ function crafty:Show()
 	self.frame:SetPoint(unpack(self.currentFrame.anchor))
 
 	self.frame:Show()
-	if self:LoadState().materials then
+	if self:State().materials then
 		self.frame.MaterialsButton:LockHighlight()
 	else
 		self.frame.MaterialsButton:UnlockHighlight()
 	end
-	self.frame.SearchBox:SetText(self:LoadState().searchText)
+	self.frame.SearchBox:SetText(self:State().searchText)
 	self:Search()
 end
 
@@ -386,12 +393,12 @@ function crafty:UpdateListing()
 	-- may be disabled from the no results message
 	getglobal((self.mode == CRAFT and 'Craft' or 'TradeSkillSkill')..1):Enable()
 	
-	if (self:LoadState().searchText ~= '' or self:LoadState().materials or next(self:LoadState().favorites)) and getglobal(self.currentFrame.elements.Main):IsShown() then
+	if (self:State().searchText ~= '' or self:State().materials or next(self:State().favorites) and not SHIFT) and getglobal(self.currentFrame.elements.Main):IsShown() then
 
 		local skillOffset = FauxScrollFrame_GetOffset(getglobal(self.currentFrame.elements.Scroll))	
 		local skillButton
 		
-		self:BuildList(self:LoadState().searchText)
+		self:BuildList()
 						
 		if self.mode == TRADE then
 			getglobal(self.frames.trade.elements.CollapseAll):Disable();
@@ -483,20 +490,24 @@ function crafty:UpdateListing()
 end
 
 function crafty:Search()
-	self:LoadState().searchText = self.frame.SearchBox:GetText() or ''
+	self:State().searchText = self.frame.SearchBox:GetText() or ''
 
 	FauxScrollFrame_SetOffset(getglobal(self.currentFrame.elements.Main), 0)
 	getglobal(self.currentFrame.elements.ScrollBar):SetValue(0)
 
-	self:BuildList(self:LoadState().searchText)
-	if getn(self.found) > 0 then
-		if self.mode == CRAFT and GetCraftSelectionIndex() > 0 then
-			CraftFrame_SetSelection(self.found[1].index)
-		elseif self.mode == TRADE then
-			TradeSkillFrame_SetSelection(self.found[1].index)
-		end
+	self:BuildList()
+	if getn(self.found) > 0 and self:State().searchText ~= '' or self:State().materials then
+		self:SelectFirst()
 	end
 	self:UpdateListing()
+end
+
+function crafty:SelectFirst()
+	if self.mode == CRAFT and GetCraftSelectionIndex() > 0 then
+		CraftFrame_SetSelection(self.found[1].index)
+	elseif self.mode == TRADE then
+		TradeSkillFrame_SetSelection(self.found[1].index)
+	end
 end
 
 function crafty:SelectionInList(skillOffset)
@@ -508,12 +519,12 @@ function crafty:SelectionInList(skillOffset)
 	return false
 end
 
-function crafty:BuildList(searchText)
+function crafty:BuildList()
 	self.found = {}
 	local reagents = {}
 	local skills = {}
 
-	local matcher = self:FuzzyMatcher(searchText)
+	local matcher = self:FuzzyMatcher(self:State().searchText)
 	
 	for i = 1, self.mode == CRAFT and GetNumCrafts() or GetNumTradeSkills() do
 		local skillName, skillType, numAvailable, isExpanded, requires
@@ -573,13 +584,13 @@ function crafty:BuildList(searchText)
 
 	local found
 
-	if self:LoadState().searchText == '' and not self:LoadState().materials then
-		found = self:LoadState().favorites
+	if self:State().searchText == '' and not self:State().materials then
+		found = self:State().favorites
 	else
 		found = {}
 
 		for _, skill in skills do
-			if skill.rating and (not self:LoadState().materials or skill.available > 0) then
+			if skill.rating and (not self:State().materials or skill.available > 0) then
 				found[skill.name] = true
 			end
 		end
