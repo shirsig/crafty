@@ -11,7 +11,7 @@ crafty_favorites = {}
 
 local TRADE, CRAFT = 1, 2
 
-local SHIFT
+local ALT = false
 
 crafty.frames = {
 	trade = {
@@ -115,8 +115,8 @@ end
 
 -- throttling the update event
 function crafty:UPDATE()
-	if IsShiftKeyDown() ~= SHIFT then
-		SHIFT = IsShiftKeyDown()
+	if not not IsAltKeyDown() ~= ALT then
+		ALT = not ALT
 		self.update_required = true
 	end
 	if self.update_required then
@@ -393,7 +393,7 @@ function crafty:UpdateListing()
 	-- may be disabled from the no results message
 	getglobal((self.mode == CRAFT and 'Craft' or 'TradeSkillSkill')..1):Enable()
 	
-	if (self:State().searchText ~= '' or self:State().materials or next(self:State().favorites) and not SHIFT) and getglobal(self.currentFrame.elements.Main):IsShown() then
+	if (self:State().searchText ~= '' or self:State().materials or next(self:State().favorites) and not ALT) and getglobal(self.currentFrame.elements.Main):IsShown() then
 
 		local skillOffset = FauxScrollFrame_GetOffset(getglobal(self.currentFrame.elements.Scroll))	
 		local skillButton
@@ -620,22 +620,27 @@ function crafty:BuildList()
 		end
 	end
 
-	for skillName in found do
-		if skills[skillName] then
-			tinsert(self.found, skills[skillName])
+	for skill, data in skills do
+		if found[skill] then
+			tinsert(self.found, data)
 		end
 	end
+
 	sort(self.found, function(a, b)
-		if b.rating < a.rating then
-			return true
-		elseif a.rating == b.rating then
-			if a.reagentRank < b.reagentRank then
+		if self:State().searchText == '' then
+			return a.index < b.index
+		else
+			if b.rating < a.rating then
 				return true
-			elseif a.reagentRank == b.reagentRank then
-				if a.reagentRank == 0 and strlen(a.name) < strlen(b.name) then
+			elseif a.rating == b.rating then
+				if a.reagentRank < b.reagentRank then
 					return true
-				elseif a.reagentRank > 0 or strlen(a.name) == strlen(b.name) then
-					return a.index < b.index
+				elseif a.reagentRank == b.reagentRank then
+					if a.reagentRank == 0 and strlen(a.name) < strlen(b.name) then
+						return true
+					elseif a.reagentRank > 0 or strlen(a.name) == strlen(b.name) then
+						return a.index < b.index
+					end
 				end
 			end
 		end
