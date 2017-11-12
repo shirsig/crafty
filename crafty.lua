@@ -496,7 +496,7 @@ function crafty:Search()
 	getglobal(self.currentFrame.elements.ScrollBar):SetValue(0)
 
 	self:BuildList()
-	if getn(self.found) > 0 and self:State().searchText ~= '' or self:State().materials then
+	if getn(self.found) > 0 and self:State().searchText ~= '' then
 		self:SelectFirst()
 	end
 	self:UpdateListing()
