@@ -7,6 +7,8 @@ crafty:SetScript('OnEvent', function()
 end)
 crafty:RegisterEvent'ADDON_LOADED'
 
+crafty_favorites = {}
+
 local TRADE, CRAFT = 1, 2
 
 crafty.frames = {
@@ -99,27 +101,13 @@ function crafty:LoadState()
 	end
 	profession = profession or '' -- TODO better solution
 
+	crafty_favorites[profession] = crafty_favorites[profession] or {}
 	self.state[profession] = self.state[profession] or {
 		searchText = '',
-		searchType = 1,
+		materials = false,
+		favorites = crafty_favorites[profession],
 	}
 	return self.state[profession]
-end
-
-function crafty:SetSearchText(searchText)
-	crafty:LoadState().searchText = searchText
-end
-
-function crafty:GetSearchText()
-	return crafty:LoadState().searchText
-end
-
-function crafty:SetAvailable(available)
-	crafty:LoadState().available = available
-end
-
-function crafty:GetAvailable()
-	return crafty:LoadState().available
 end
 
 -- throttling the update event
@@ -170,10 +158,6 @@ function crafty:ADDON_LOADED()
 	local searchBox = CreateFrame('EditBox', nil, self.frame, 'InputBoxTemplate')
 	self.frame.SearchBox = searchBox
 	searchBox:SetTextInsets(16, 20, 0, 0)
-	-- self.Instructions:SetText(SEARCH);
-	-- self.Instructions:ClearAllPoints();
-	-- self.Instructions:SetPoint("TOPLEFT", self, "TOPLEFT", 16, 0);
-	-- self.Instructions:SetPoint("BOTTOMRIGHT", self, "BOTTOMRIGHT", -20, 0);
 	searchBox:SetAutoFocus(false)
 	searchBox:SetWidth(204)
 	searchBox:SetHeight(20)
@@ -256,15 +240,15 @@ function crafty:ADDON_LOADED()
 		end)
 	end
 
-	-- Available Button
+	-- Materials Button
 	self.frame.MaterialsButton = CreateFrame('Button', nil, self.frame, 'UIPanelButtonTemplate')
 	self.frame.MaterialsButton:SetWidth(52)
 	self.frame.MaterialsButton:SetHeight(25)
 	self.frame.MaterialsButton:SetPoint('LEFT', searchBox, 'RIGHT', 4, 0)
 	self.frame.MaterialsButton:SetText'Mats'
 	self.frame.MaterialsButton:SetScript('OnClick', function()
-		self:SetAvailable(not self:GetAvailable())
-		if self:GetAvailable() then
+		self:LoadState().materials = not self:LoadState().materials
+		if self:LoadState().materials then
 			this:LockHighlight()
 		else
 			this:UnlockHighlight()
@@ -317,7 +301,14 @@ function crafty:CRAFT_SHOW()
 		CraftFrame_Update = function() self.update_required = true end
 		for i = 1, 8 do
 			getglobal('Craft'..i):SetScript('OnDoubleClick', function()
-				self.frame.SearchBox:SetText(this.skill.name)
+				self.frame.SearchBox:SetText(GetCraftInfo(this:GetID()))
+			end)
+			getglobal('Craft'..i):SetScript('OnMouseDown', function()
+				if arg1 == 'RightButton' then
+					local favorites, name = self:LoadState().favorites, GetCraftInfo(this:GetID())
+					favorites[name] = not favorites[name] or nil
+					self:Search()
+				end
 			end)
 		end
 	end
@@ -340,7 +331,14 @@ function crafty:TRADE_SKILL_SHOW()
 		TradeSkillFrame_Update = function() self.update_required = true end
 		for i = 1, 8 do
 			getglobal('TradeSkillSkill'..i):SetScript('OnDoubleClick', function()
-				self.frame.SearchBox:SetText(this.skill.name)
+				self.frame.SearchBox:SetText(GetTradeSkillInfo(this:GetID()))
+			end)
+			getglobal('TradeSkillSkill'..i):SetScript('OnMouseDown', function()
+				if arg1 == 'RightButton' then
+					local favorites, name = self:LoadState().favorites, GetTradeSkillInfo(this:GetID())
+					favorites[name] = not favorites[name] or nil
+					self:Search()
+				end
 			end)
 		end
 	end
@@ -361,12 +359,12 @@ function crafty:Show()
 	self.frame:SetPoint(unpack(self.currentFrame.anchor))
 
 	self.frame:Show()
-	if self:GetAvailable() then
+	if self:LoadState().materials then
 		self.frame.MaterialsButton:LockHighlight()
 	else
 		self.frame.MaterialsButton:UnlockHighlight()
 	end
-	self.frame.SearchBox:SetText(self:GetSearchText())
+	self.frame.SearchBox:SetText(self:LoadState().searchText)
 	self:Search()
 end
 
@@ -388,12 +386,12 @@ function crafty:UpdateListing()
 	-- may be disabled from the no results message
 	getglobal((self.mode == CRAFT and 'Craft' or 'TradeSkillSkill')..1):Enable()
 	
-	if (self:GetSearchText() ~= '' or self:GetAvailable()) and getglobal(self.currentFrame.elements.Main):IsShown() then
+	if (self:LoadState().searchText ~= '' or self:LoadState().materials or next(self:LoadState().favorites)) and getglobal(self.currentFrame.elements.Main):IsShown() then
 
 		local skillOffset = FauxScrollFrame_GetOffset(getglobal(self.currentFrame.elements.Scroll))	
 		local skillButton
 		
-		self:BuildList(self:GetSearchText())
+		self:BuildList(self:LoadState().searchText)
 						
 		if self.mode == TRADE then
 			getglobal(self.frames.trade.elements.CollapseAll):Disable();
@@ -412,7 +410,6 @@ function crafty:UpdateListing()
 				skillButton = getglobal((self.mode == CRAFT and 'Craft' or 'TradeSkillSkill')..i)
 				
 				if self.found[skillIndex] then
-					skillButton.skill = self.found[skillIndex]
 					if getglobal(self.currentFrame.elements.Scroll):IsVisible() then
 						skillButton:SetWidth(293)
 					else
@@ -458,13 +455,13 @@ function crafty:UpdateListing()
 			end
 		else
 			getglobal(self.currentFrame.elements.Scroll):Hide()
-			for i=1,self.mode == CRAFT and CRAFTS_DISPLAYED or TRADE_SKILLS_DISPLAYED do
+			for i = 1, self.mode == CRAFT and CRAFTS_DISPLAYED or TRADE_SKILLS_DISPLAYED do
 				skillButton = getglobal((self.mode == CRAFT and 'Craft' or 'TradeSkillSkill')..i)
 				if i == 1 then
 					skillButton:Disable()
 					skillButton:SetWidth(323)
 					skillButton:SetDisabledTextColor(1, 1, 1)
-					skillButton:SetDisabledTexture('')
+					skillButton:SetDisabledTexture''
 					skillButton:SetText'No results matched your search.'
 					skillButton:UnlockHighlight()
 					skillButton:Show()
@@ -486,12 +483,12 @@ function crafty:UpdateListing()
 end
 
 function crafty:Search()
-	self:SetSearchText(self.frame.SearchBox:GetText() or '')
+	self:LoadState().searchText = self.frame.SearchBox:GetText() or ''
 
 	FauxScrollFrame_SetOffset(getglobal(self.currentFrame.elements.Main), 0)
 	getglobal(self.currentFrame.elements.ScrollBar):SetValue(0)
 
-	self:BuildList(self:GetSearchText())
+	self:BuildList(self:LoadState().searchText)
 	if getn(self.found) > 0 then
 		if self.mode == CRAFT and GetCraftSelectionIndex() > 0 then
 			CraftFrame_SetSelection(self.found[1].index)
@@ -574,39 +571,48 @@ function crafty:BuildList(searchText)
 		end
 	end
 
-	local found = {}
-	for _, skill in skills do
-		if skill.rating and (not self:GetAvailable() or skill.available > 0) then
-			found[skill.name] = true
-		end
-	end
+	local found
 
-	while true do
-		local changed
+	if self:LoadState().searchText == '' and not self:LoadState().materials then
+		found = self:LoadState().favorites
+	else
+		found = {}
+
 		for _, skill in skills do
-			if found[skill.name] then
-				for _, reagentName in skill.reagents do
-					local reagent = skills[reagentName]
-					if reagent then
-						if not found[reagentName] then
-							found[reagentName] = true
-							changed = true
-						end
-						if not reagent.rating or skill.rating > reagent.rating then
-							reagent.rating = skill.rating
-							reagent.reagentRank = skill.reagentRank + 1
+			if skill.rating and (not self:LoadState().materials or skill.available > 0) then
+				found[skill.name] = true
+			end
+		end
+
+		while true do
+			local changed
+			for _, skill in skills do
+				if found[skill.name] then
+					for _, reagentName in skill.reagents do
+						local reagent = skills[reagentName]
+						if reagent then
+							if not found[reagentName] then
+								found[reagentName] = true
+								changed = true
+							end
+							if not reagent.rating or skill.rating > reagent.rating then
+								reagent.rating = skill.rating
+								reagent.reagentRank = skill.reagentRank + 1
+							end
 						end
 					end
 				end
 			end
-		end
-		if not changed then
-			break
+			if not changed then
+				break
+			end
 		end
 	end
 
-	for skillName, _ in found do
-		tinsert(self.found, skills[skillName])
+	for skillName in found do
+		if skills[skillName] then
+			tinsert(self.found, skills[skillName])
+		end
 	end
 	sort(self.found, function(a, b)
 		if b.rating < a.rating then

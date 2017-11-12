@@ -5,5 +5,5 @@
 ## Version: 1.0
 ## LoadOnDemand: 1
 ## LoadWith: Blizzard_TradeSkillUI, Blizzard_CraftUI
-
+## SavedVariablesPerCharacter: crafty_favorites
 crafty.lua
