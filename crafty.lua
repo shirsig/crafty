@@ -590,7 +590,7 @@ function crafty:BuildList()
 		found = {}
 
 		for _, skill in skills do
-			if skill.rating and (not self:State().materials or skill.available > 0) then
+			if skill.rating then
 				found[skill.name] = true
 			end
 		end
@@ -616,6 +616,14 @@ function crafty:BuildList()
 			end
 			if not changed then
 				break
+			end
+		end
+
+		if self:State().materials then
+			for _, skill in skills do
+				if skill.available == 0 then
+					found[skill.name] = nil
+				end
 			end
 		end
 	end
