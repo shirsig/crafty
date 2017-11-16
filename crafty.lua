@@ -115,7 +115,7 @@ end
 
 -- throttling the update event
 function crafty:UPDATE()
-	if not not IsAltKeyDown() ~= ALT then
+	if not not IsAltKeyDown() ~= ALT and self.frame and self.frame:IsShown() then
 		ALT = not ALT
 		self.update_required = true
 	end
