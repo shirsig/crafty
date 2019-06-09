@@ -1,9 +1,9 @@
 local crafty = CreateFrame'Frame'
 crafty:SetScript('OnUpdate', function()
-	this:UPDATE()
+	crafty.UPDATE()
 end)
 crafty:SetScript('OnEvent', function(self, event, ...)
-	this[event](self, ...)
+	self[event](self, ...)
 end)
 crafty:RegisterEvent'ADDON_LOADED'
 
@@ -38,34 +38,34 @@ crafty.frames = {
 }
 
 do
-	local function action()
-	    local input = strlower(getglobal(this:GetParent():GetName()..'EditBox'):GetText())
+	local function action(self)
+	    local input = strlower(getglobal(self:GetParent():GetName()..'EditBox'):GetText())
 	    if tonumber(input) then
-	    	crafty:SendReagentMessage('CHANNEL', input)
+	    	crafty.SendReagentMessage('CHANNEL', input)
 		elseif input == 'guild' or input == 'g' then
-			crafty:SendReagentMessage'GUILD'
+			crafty.SendReagentMessage'GUILD'
 		elseif input == 'o' then
-			crafty:SendReagentMessage'OFFICER'
+			crafty.SendReagentMessage'OFFICER'
 		elseif input == 'raid' or input == 'ra' then
-			crafty:SendReagentMessage'RAID'
+			crafty.SendReagentMessage'RAID'
 		elseif input == 'rw' then
-			crafty:SendReagentMessage'RAID_WARNING'
+			crafty.SendReagentMessage'RAID_WARNING'
 		elseif input == 'bg' then
-			crafty:SendReagentMessage'BATTLEGROUND'
+			crafty.SendReagentMessage'BATTLEGROUND'
 		elseif input == 'party' or input == 'p' then
-			crafty:SendReagentMessage'PARTY'
+			crafty.SendReagentMessage'PARTY'
 		elseif input == 'say' or input == 's' then
-			crafty:SendReagentMessage'SAY'
+			crafty.SendReagentMessage'SAY'
 		elseif input == 'yell' or input == 'y' then
-			crafty:SendReagentMessage'YELL'	
+			crafty.SendReagentMessage'YELL'	
 		elseif input == 'emote' or input == 'em' then
-			crafty:SendReagentMessage'EMOTE'	
+			crafty.SendReagentMessage'EMOTE'	
 		elseif input == 'reply' or input == 'r' then
 			if ChatEdit_GetLastTellTarget(ChatFrameEditBox) ~= '' then
-				crafty:SendReagentMessage('WHISPER', ChatEdit_GetLastTellTarget(ChatFrameEditBox))
+				crafty.SendReagentMessage('WHISPER', ChatEdit_GetLastTellTarget(ChatFrameEditBox))
 			end
 		elseif strlen(input) > 1 then
-			crafty:SendReagentMessage('WHISPER', gsub(input, '^@', ''))
+			crafty.SendReagentMessage('WHISPER', gsub(input, '^@', ''))
 		end
 	end
 
@@ -74,18 +74,18 @@ do
 	    button1 = 'Link',
 	    button2 = 'Cancel',
 	    hasEditBox = 1,
-	    OnShow = function()
-	    	local editBox = getglobal(this:GetName()..'EditBox')
+	    OnShow = function(self)
+	    	local editBox = getglobal(self:GetName()..'EditBox')
 			editBox:SetText('')
 			editBox:SetFocus()
 		end,
 	    OnAccept = action,
-	    EditBoxOnEnterPressed = function()
-	    	action()
-			this:GetParent():Hide()
+	    EditBoxOnEnterPressed = function(self)
+	    	action(self)
+			self:GetParent():Hide()
 		end,
-		EditBoxOnEscapePressed = function()
-			this:GetParent():Hide()
+		EditBoxOnEscapePressed = function(self)
+			self:GetParent():Hide()
 		end,
 	    timeout = 0,
 	    hideOnEscape = 1,
@@ -94,11 +94,11 @@ end
 
 do
 	local state = {}
-	function crafty:State()
+	function crafty.State()
 		local profession
-		if self.mode == TRADE then
+		if crafty.mode == TRADE then
 			profession = GetTradeSkillLine()
-		elseif self.mode == CRAFT then
+		elseif crafty.mode == CRAFT then
 			profession = GetCraftSkillLine(1)
 		end
 		profession = profession or '' -- TODO better solution
@@ -114,27 +114,27 @@ do
 end
 
 -- throttling the update event
-function crafty:UPDATE()
-	if not not IsAltKeyDown() ~= ALT and self.frame and self.frame:IsShown() then
+function crafty.UPDATE()
+	if not not IsAltKeyDown() ~= ALT and crafty.frame and crafty.frame:IsShown() then
 		ALT = not ALT
-		self.update_required = true
+		crafty.update_required = true
 	end
-	if self.update_required then
-		self.update_required = nil
-		self.currentFrame.orig_update()
-		self:UpdateListing()
+	if crafty.update_required then
+		crafty.update_required = nil
+		crafty.currentFrame.orig_update()
+		crafty.UpdateListing()
 	end
 end
 
-function crafty:ADDON_LOADED(self, arg1)
+function crafty.ADDON_LOADED(_, arg1)
 	if arg1 ~= 'crafty' then
 		return
 	end
 
-	self.found = {}
+	crafty.found = {}
 
-	self:RegisterEvent'TRADE_SKILL_SHOW'
-	self:RegisterEvent'CRAFT_SHOW'
+	crafty:RegisterEvent'TRADE_SKILL_SHOW'
+	crafty:RegisterEvent'CRAFT_SHOW'
 	
 	local origSetItemRef = SetItemRef
 	SetItemRef = function(...)
@@ -148,31 +148,31 @@ function crafty:ADDON_LOADED(self, arg1)
 	end
 
 	-- Create main frame 
-	self.frame = CreateFrame'Frame'
-	self.frame:Hide()
-	self.frame:SetPoint('CENTER', 'UIParent', 'CENTER', 0, 0)
-	self.frame:SetWidth(342)  
-	self.frame:SetHeight(45)
-	self.frame:SetFrameStrata'MEDIUM'
-	self.frame:SetMovable(false)
-	self.frame:EnableMouse(true)
-	self.frame:SetBackdrop({
+	crafty.frame = CreateFrame'Frame'
+	crafty.frame:Hide()
+	crafty.frame:SetPoint('CENTER', 'UIParent', 'CENTER', 0, 0)
+	crafty.frame:SetWidth(342)  
+	crafty.frame:SetHeight(45)
+	crafty.frame:SetFrameStrata'MEDIUM'
+	crafty.frame:SetMovable(false)
+	crafty.frame:EnableMouse(true)
+	crafty.frame:SetBackdrop({
 			bgFile = [[Interface\DialogFrame\UI-DialogBox-Background]], tile = true, tileSize = 32,
 			edgeFile = [[Interface\DialogFrame\UI-DialogBox-Border]], edgeSize = 20,
 			insets = {left=5, right=6, top=6, bottom=5},
 	})
 	
-	local searchBox = CreateFrame('EditBox', nil, self.frame, 'InputBoxTemplate')
-	self.frame.SearchBox = searchBox
+	local searchBox = CreateFrame('EditBox', nil, crafty.frame, 'InputBoxTemplate')
+	crafty.frame.SearchBox = searchBox
 	searchBox:SetTextInsets(16, 20, 0, 0)
 	searchBox:SetAutoFocus(false)
 	searchBox:SetWidth(204)
 	searchBox:SetHeight(20)
-	searchBox:SetPoint('LEFT', self.frame, 'LEFT', 17, 0)
+	searchBox:SetPoint('LEFT', crafty.frame, 'LEFT', 17, 0)
 	searchBox:SetBackdropColor(TOOLTIP_DEFAULT_COLOR.r, TOOLTIP_DEFAULT_COLOR.g, TOOLTIP_DEFAULT_COLOR.b)
 	searchBox:SetBackdropBorderColor(TOOLTIP_DEFAULT_BACKGROUND_COLOR.r, TOOLTIP_DEFAULT_BACKGROUND_COLOR.g, TOOLTIP_DEFAULT_BACKGROUND_COLOR.b)
-	searchBox:SetScript('OnEnterPressed', function()
-		this:ClearFocus()
+	searchBox:SetScript('OnEnterPressed', function(self)
+		self:ClearFocus()
 	end)
 	do
 		local instructions = searchBox:CreateFontString(nil, 'ARTWORK')
@@ -201,76 +201,76 @@ function crafty:ADDON_LOADED(self, arg1)
 			tex:SetAlpha(.5)
 			clearButton.tex = tex
 		end
-		clearButton:SetScript('OnEnter', function()
-			this.tex:SetAlpha(1)
+		clearButton:SetScript('OnEnter', function(self)
+			self.tex:SetAlpha(1)
 		end)
-		clearButton:SetScript('OnLeave', function()
-			this.tex:SetAlpha(.5)
+		clearButton:SetScript('OnLeave', function(self)
+			self.tex:SetAlpha(.5)
 		end)
-		clearButton:SetScript('OnMouseUp', function()
-			this.tex:SetPoint('TOPLEFT', 0, 0)
+		clearButton:SetScript('OnMouseUp', function(self)
+			self.tex:SetPoint('TOPLEFT', 0, 0)
 		end)
-		clearButton:SetScript('OnMouseDown', function()
-			this.tex:SetPoint('TOPLEFT', 1, -1)
+		clearButton:SetScript('OnMouseDown', function(self)
+			self.tex:SetPoint('TOPLEFT', 1, -1)
 		end)
 		clearButton:SetScript('OnClick', function()
 			PlaySound'igMainMenuOptionCheckBoxOn'
 			searchBox:SetText''
 			searchBox:ClearFocus()
 		end)
-		searchBox:SetScript('OnEditFocusGained', function()
-			this.focused = true
+		searchBox:SetScript('OnEditFocusGained', functionself()
+			self.focused = true
 			searchIcon:SetVertexColor(1, 1, 1)
 			clearButton:Show()
 		end)
-		searchBox:SetScript('OnEditFocusLost', function()
-			this.focused = false
-			if this:GetText() == '' then
+		searchBox:SetScript('OnEditFocusLost', function(self)
+			self.focused = false
+			if self:GetText() == '' then
 				searchIcon:SetVertexColor(.6, .6, .6)
 				clearButton:Hide()
 			end
 		end)
-		searchBox:SetScript('OnTextChanged', function()
-			if this:GetText() == '' then
+		searchBox:SetScript('OnTextChanged', function(self)
+			if self:GetText() == '' then
 				instructions:Show()
 			else
 				instructions:Hide()
 			end
-			if this:GetText() == '' and not this.focused then
+			if self:GetText() == '' and not self.focused then
 				searchIcon:SetVertexColor(.6, .6, .6)
 				clearButton:Hide()
 			else
 				searchIcon:SetVertexColor(1, 1, 1)
 				clearButton:Show()	
 			end
-			self:Search()
+			crafty.Search()
 		end)
 	end
 
 	-- Materials Button
-	self.frame.MaterialsButton = CreateFrame('Button', nil, self.frame, 'UIPanelButtonTemplate')
-	self.frame.MaterialsButton:SetWidth(52)
-	self.frame.MaterialsButton:SetHeight(25)
-	self.frame.MaterialsButton:SetPoint('LEFT', searchBox, 'RIGHT', 4, 0)
-	self.frame.MaterialsButton:SetText'Mats'
-	self.frame.MaterialsButton:SetScript('OnClick', function()
-		self:State().materials = not self:State().materials
-		if self:State().materials then
-			this:LockHighlight()
+	crafty.frame.MaterialsButton = CreateFrame('Button', nil, crafty.frame, 'UIPanelButtonTemplate')
+	crafty.frame.MaterialsButton:SetWidth(52)
+	crafty.frame.MaterialsButton:SetHeight(25)
+	crafty.frame.MaterialsButton:SetPoint('LEFT', searchBox, 'RIGHT', 4, 0)
+	crafty.frame.MaterialsButton:SetText'Mats'
+	crafty.frame.MaterialsButton:SetScript('OnClick', function(self)
+		crafty.State().materials = not crafty.State().materials
+		if crafty.State().materials then
+			self:LockHighlight()
 		else
-			this:UnlockHighlight()
+			self:UnlockHighlight()
 		end
-        self:Search()
+        crafty.Search()
     end)
 
 	-- Link button
-	self.frame.LinkButton = CreateFrame('Button', nil, self.frame, 'UIPanelButtonTemplate')
-	self.frame.LinkButton:SetWidth(52)
-	self.frame.LinkButton:SetHeight(25)
-	self.frame.LinkButton:SetPoint('LEFT', self.frame.MaterialsButton, 'RIGHT', 2, 0)
-	self.frame.LinkButton:SetText'Link'
-	self.frame.LinkButton:RegisterForClicks('LeftButtonUp', 'RightButtonUp')
-	self.frame.LinkButton:SetScript('OnClick', function(_, arg1) 
+	crafty.frame.LinkButton = CreateFrame('Button', nil, crafty.frame, 'UIPanelButtonTemplate')
+	crafty.frame.LinkButton:SetWidth(52)
+	crafty.frame.LinkButton:SetHeight(25)
+	crafty.frame.LinkButton:SetPoint('LEFT', crafty.frame.MaterialsButton, 'RIGHT', 2, 0)
+	crafty.frame.LinkButton:SetText'Link'
+	crafty.frame.LinkButton:RegisterForClicks('LeftButtonUp', 'RightButtonUp')
+	crafty.frame.LinkButton:SetScript('OnClick', function(_, arg1) 
 		if StaticPopup_Visible'CRAFTY_LINK' then 
 			StaticPopup_Hide'CRAFTY_LINK'
 		elseif arg1 == 'RightButton' then
@@ -280,179 +280,179 @@ function crafty:ADDON_LOADED(self, arg1)
 		if arg1 == 'LeftButton' then
 			local channel = GetNumPartyMembers() == 0 and 'WHISPER' or 'PARTY'
 			if channel == 'PARTY' or ChatEdit_GetLastTellTarget(ChatFrameEditBox) ~= '' then
-				crafty:SendReagentMessage(channel, ChatEdit_GetLastTellTarget(ChatFrameEditBox))
+				crafty.SendReagentMessage(channel, ChatEdit_GetLastTellTarget(ChatFrameEditBox))
 			end
 		end
 	end)
 end
 
-function crafty:Relevel(frame)
+function crafty.Relevel(frame)
 	for _, child in pairs{frame:GetChildren()} do
 		child:SetFrameLevel(frame:GetFrameLevel() + 1)
-		self:Relevel(child)
+		crafty.Relevel(child)
 	end
 end
 
-function crafty:CRAFT_SHOW()
+function crafty.CRAFT_SHOW()
 	if not GetCraftDisplaySkillLine() then
 		return
 	end
 
-	self.mode = CRAFT
-	self.currentFrame = self.frames.craft
+	.mode = CRAFT
+	.currentFrame = .frames.craft
 
 	-- first time window has been opened
-	if not self.currentFrame.orig_update then
-		self:RegisterEvent'CRAFT_CLOSE'
-		self.currentFrame.orig_update = CraftFrame_Update
-		CraftFrame_Update = function() self.update_required = true end
+	if not `.currentFrame.orig_update then
+		:RegisterEvent'CRAFT_CLOSE'
+		.currentFrame.orig_update = CraftFrame_Update
+		CraftFrame_Update = function() .update_required = true end
 		for i = 1, 8 do
-			getglobal('Craft'..i):SetScript('OnDoubleClick', function()
-				self.frame.SearchBox:SetText(GetCraftInfo(this:GetID()))
+			getglobal('Craft' .. i):SetScript('OnDoubleClick', function(self)
+				crafty.frame.SearchBox:SetText(GetCraftInfo(self:GetID()))
 			end)
-			getglobal('Craft'..i):SetScript('OnMouseDown', function(_, arg1)
+			getglobal('Craft' .. i):SetScript('OnMouseDown', function(self, arg1)
 				if arg1 == 'RightButton' then
-					local favorites, name = self:State().favorites, GetCraftInfo(this:GetID())
+					local favorites, name = crafty.State().favorites, GetCraftInfo(self:GetID())
 					favorites[name] = not favorites[name] or nil
-					self:Search()
+					crafty.Search()
 				end
 			end)
 		end
 	end
 
-	if getglobal(self.frames.trade.elements.Main) and getglobal(self.frames.trade.elements.Main):IsShown() then
-		getglobal(self.frames.trade.elements.Main):Hide()
+	if getglobal(crafty.frames.trade.elements.Main) and getglobal(crafty.frames.trade.elements.Main):IsShown() then
+		getglobal(crafty.frames.trade.elements.Main):Hide()
 	end
 
-	crafty:Show()
+	crafty.Show()
 end
 
-function crafty:TRADE_SKILL_SHOW()
-	self.mode = TRADE
-	self.currentFrame = self.frames.trade
+function crafty.TRADE_SKILL_SHOW()
+	crafty.mode = TRADE
+	crafty.currentFrame = crafty.frames.trade
 
 	-- first time window has been opened
-	if not self.currentFrame.orig_update then
-		self:RegisterEvent'TRADE_SKILL_CLOSE'
-		self.currentFrame.orig_update = TradeSkillFrame_Update
-		TradeSkillFrame_Update = function() self.update_required = true end
+	if not crafty.currentFrame.orig_update then
+		crafty:RegisterEvent'TRADE_SKILL_CLOSE'
+		crafty.currentFrame.orig_update = TradeSkillFrame_Update
+		TradeSkillFrame_Update = function() crafty.update_required = true end
 		for i = 1, 8 do
-			getglobal('TradeSkillSkill'..i):SetScript('OnDoubleClick', function()
-				self.frame.SearchBox:SetText(GetTradeSkillInfo(this:GetID()))
+			getglobal('TradeSkillSkill'..i):SetScript('OnDoubleClick', function(self)
+				crafty.frame.SearchBox:SetText(GetTradeSkillInfo(self:GetID()))
 			end)
-			getglobal('TradeSkillSkill'..i):SetScript('OnMouseDown', function(_, arg1)
+			getglobal('TradeSkillSkill'..i):SetScript('OnMouseDown', function(self, arg1)
 				if arg1 == 'RightButton' then
-					local favorites, name = self:State().favorites, GetTradeSkillInfo(this:GetID())
+					local favorites, name = crafty.State().favorites, GetTradeSkillInfo(self:GetID())
 					favorites[name] = not favorites[name] or nil
-					self:Search()
+					crafty.Search()
 				end
 			end)
 		end
 	end
 
-	if getglobal(self.frames.craft.elements.Main) and getglobal(self.frames.craft.elements.Main):IsShown() then
-		getglobal(self.frames.craft.elements.Main):Hide()
+	if getglobal(crafty.frames.craft.elements.Main) and getglobal(crafty.frames.craft.elements.Main):IsShown() then
+		getglobal(crafty.frames.craft.elements.Main):Hide()
 	end
 
-	crafty:Show()
+	crafty.Show()
 end
 
-function crafty:Show()
-	self.currentFrame.orig_update()
+function crafty.Show()
+	crafty.currentFrame.orig_update()
 
-	self.frame:SetParent(self.currentFrame.elements.Main)
-	self:Relevel(self.frame)
-	self.frame:ClearAllPoints()
-	self.frame:SetPoint(unpack(self.currentFrame.anchor))
+	crafty.frame:SetParent(crafty.currentFrame.elements.Main)
+	crafty.Relevel(crafty.frame)
+	crafty.frame:ClearAllPoints()
+	crafty.frame:SetPoint(unpack(crafty.currentFrame.anchor))
 
-	self.frame:Show()
-	if self:State().materials then
-		self.frame.MaterialsButton:LockHighlight()
+	crafty.frame:Show()
+	if crafty.State().materials then
+		crafty.frame.MaterialsButton:LockHighlight()
 	else
-		self.frame.MaterialsButton:UnlockHighlight()
+		crafty.frame.MaterialsButton:UnlockHighlight()
 	end
-	self.frame.SearchBox:SetText(self:State().searchText)
-	self:Search()
+	crafty.frame.SearchBox:SetText(crafty.State().searchText)
+	crafty.Search()
 end
 
-function crafty:CRAFT_CLOSE()
-	crafty:Close()
+function crafty.CRAFT_CLOSE()
+	crafty.Close()
 end
 
-function crafty:TRADE_SKILL_CLOSE()
-	crafty:Close()
+function crafty.TRADE_SKILL_CLOSE()
+	crafty.Close()
 end
 
-function crafty:Close()
-	self.frame:Hide()
+function crafty.Close()
+	crafty.frame:Hide()
 	StaticPopup_Hide'CRAFTY_LINK'
 end
 
-function crafty:UpdateListing()
+function crafty.UpdateListing()
 
 	-- may be disabled from the no results message
-	getglobal((self.mode == CRAFT and 'Craft' or 'TradeSkillSkill')..1):Enable()
+	getglobal((crafty.mode == CRAFT and 'Craft' or 'TradeSkillSkill')..1):Enable()
 	
-	if (self:State().searchText ~= '' or self:State().materials or next(self:State().favorites) and not ALT) and getglobal(self.currentFrame.elements.Main):IsShown() then
+	if (crafty.State().searchText ~= '' or crafty.State().materials or next(crafty.State().favorites) and not ALT) and getglobal(crafty.currentFrame.elements.Main):IsShown() then
 
-		local skillOffset = FauxScrollFrame_GetOffset(getglobal(self.currentFrame.elements.Scroll))	
+		local skillOffset = FauxScrollFrame_GetOffset(getglobal(crafty.currentFrame.elements.Scroll))	
 		local skillButton
 		
-		self:BuildList()
+		crafty.BuildList()
 						
-		if self.mode == TRADE then
-			getglobal(self.frames.trade.elements.CollapseAll):Disable();
+		if crafty.mode == TRADE then
+			getglobal(crafty.frames.trade.elements.CollapseAll):Disable();
 			for i = 1, TRADE_SKILLS_DISPLAYED do
 				getglobal('TradeSkillSkill'..i..'Text'):SetPoint('TOPLEFT', 'TradeSkillSkill'..i, 'TOPLEFT', 3, 0)
 			end
 		end
 		
-		FauxScrollFrame_Update(getglobal(self.currentFrame.elements.Scroll), #self.found, (self.mode == CRAFT and CRAFTS_DISPLAYED or TRADE_SKILLS_DISPLAYED), (self.mode == CRAFT and CRAFT_SKILL_HEIGHT or TRADE_SKILL_HEIGHT), nil, nil, nil, getglobal(self.currentFrame.elements.Highlight), 293, 316 )
-		getglobal(self.currentFrame.elements.Highlight):Hide()
+		FauxScrollFrame_Update(getglobal(crafty.currentFrame.elements.Scroll), #crafty.found, (crafty.mode == CRAFT and CRAFTS_DISPLAYED or TRADE_SKILLS_DISPLAYED), (crafty.mode == CRAFT and CRAFT_SKILL_HEIGHT or TRADE_SKILL_HEIGHT), nil, nil, nil, getglobal(crafty.currentFrame.elements.Highlight), 293, 316 )
+		getglobal(crafty.currentFrame.elements.Highlight):Hide()
 		
-		if #self.found > 0 then
+		if #crafty.found > 0 then
 					
-			for i = 1, self.mode == CRAFT and CRAFTS_DISPLAYED or TRADE_SKILLS_DISPLAYED do
+			for i = 1, crafty.mode == CRAFT and CRAFTS_DISPLAYED or TRADE_SKILLS_DISPLAYED do
 				local skillIndex = i + skillOffset
-				skillButton = getglobal((self.mode == CRAFT and 'Craft' or 'TradeSkillSkill')..i)
+				skillButton = getglobal((crafty.mode == CRAFT and 'Craft' or 'TradeSkillSkill')..i)
 				
-				if self.found[skillIndex] then
-					if getglobal(self.currentFrame.elements.Scroll):IsVisible() then
+				if crafty.found[skillIndex] then
+					if getglobal(crafty.currentFrame.elements.Scroll):IsVisible() then
 						skillButton:SetWidth(293)
 					else
 						skillButton:SetWidth(323)
 					end
 					
-					local color = (self.mode == CRAFT and CraftTypeColor[self.found[skillIndex].type] or TradeSkillTypeColor[self.found[skillIndex].type])
+					local color = (crafty.mode == CRAFT and CraftTypeColor[crafty.found[skillIndex].type] or TradeSkillTypeColor[crafty.found[skillIndex].type])
 					if color then
 						skillButton:SetTextColor(color.r, color.g, color.b)
 					end
-					skillButton:SetID(self.found[skillIndex].index)
+					skillButton:SetID(crafty.found[skillIndex].index)
 					skillButton:Show()
 					
-					if self.found[skillIndex].name == '' then
+					if crafty.found[skillIndex].name == '' then
 						return
 					end
 					
 					skillButton:SetNormalTexture('')
-					getglobal((self.mode == CRAFT and 'Craft' or 'TradeSkillSkill')..i..'Highlight'):SetTexture''
-					if self.found[skillIndex].available == 0 then
-						skillButton:SetText(' '..self.found[skillIndex].name)
+					getglobal((crafty.mode == CRAFT and 'Craft' or 'TradeSkillSkill')..i..'Highlight'):SetTexture''
+					if crafty.found[skillIndex].available == 0 then
+						skillButton:SetText(' '..crafty.found[skillIndex].name)
 					else
-						skillButton:SetText(' '..self.found[skillIndex].name..' ['..self.found[skillIndex].available..']')
+						skillButton:SetText(' '..crafty.found[skillIndex].name..' ['..crafty.found[skillIndex].available..']')
 					end
 					
-					if (self.mode == CRAFT and GetCraftSelectionIndex() or GetTradeSkillSelectionIndex()) == self.found[skillIndex].index then
-						getglobal(self.currentFrame.elements.Highlight):SetPoint('TOPLEFT', skillButton, 'TOPLEFT', 0, 0)
-						getglobal(self.currentFrame.elements.Highlight):Show()
+					if (crafty.mode == CRAFT and GetCraftSelectionIndex() or GetTradeSkillSelectionIndex()) == crafty.found[skillIndex].index then
+						getglobal(crafty.currentFrame.elements.Highlight):SetPoint('TOPLEFT', skillButton, 'TOPLEFT', 0, 0)
+						getglobal(crafty.currentFrame.elements.Highlight):Show()
 						skillButton:LockHighlight()
 						-- Setting the num avail so the create all button works for tradeskills
-						if self.mode == TRADE and getglobal(self.frames.trade.elements.Main) then
-							getglobal(self.currentFrame.elements.Main).numAvailable = self.found[skillIndex].available
+						if crafty.mode == TRADE and getglobal(crafty.frames.trade.elements.Main) then
+							getglobal(crafty.currentFrame.elements.Main).numAvailable = crafty.found[skillIndex].available
 						end
 					else
-						if not self:SelectionInList(skillOffset) then
-							getglobal(self.currentFrame.elements.Highlight):Hide()
+						if not crafty.SelectionInList(skillOffset) then
+							getglobal(crafty.currentFrame.elements.Highlight):Hide()
 						end
 						skillButton:UnlockHighlight()
 					end
@@ -461,9 +461,9 @@ function crafty:UpdateListing()
 				end
 			end
 		else
-			getglobal(self.currentFrame.elements.Scroll):Hide()
-			for i = 1, self.mode == CRAFT and CRAFTS_DISPLAYED or TRADE_SKILLS_DISPLAYED do
-				skillButton = getglobal((self.mode == CRAFT and 'Craft' or 'TradeSkillSkill')..i)
+			getglobal(crafty.currentFrame.elements.Scroll):Hide()
+			for i = 1, crafty.mode == CRAFT and CRAFTS_DISPLAYED or TRADE_SKILLS_DISPLAYED do
+				skillButton = getglobal((crafty.mode == CRAFT and 'Craft' or 'TradeSkillSkill')..i)
 				if i == 1 then
 					skillButton:Disable()
 					skillButton:SetWidth(323)
@@ -478,60 +478,60 @@ function crafty:UpdateListing()
 			end
 		end
 	else
-		if self.mode == CRAFT then
-			self.frames.craft.orig_update()
-		elseif self.mode == TRADE then
+		if crafty.mode == CRAFT then
+			crafty.frames.craft.orig_update()
+		elseif crafty.mode == TRADE then
 			for i = 1, TRADE_SKILLS_DISPLAYED do
 				getglobal('TradeSkillSkill'..i..'Text'):SetPoint('TOPLEFT', 'TradeSkillSkill'..i, 'TOPLEFT', 21, 0)
 			end
-			self.frames.trade.orig_update()
+			crafty.frames.trade.orig_update()
 		end
 	end
 end
 
-function crafty:Search()
-	self:State().searchText = self.frame.SearchBox:GetText() or ''
+function crafty.Search()
+	crafty.State().searchText = crafty.frame.SearchBox:GetText() or ''
 
-	FauxScrollFrame_SetOffset(getglobal(self.currentFrame.elements.Main), 0)
-	getglobal(self.currentFrame.elements.ScrollBar):SetValue(0)
+	FauxScrollFrame_SetOffset(getglobal(crafty.currentFrame.elements.Main), 0)
+	getglobal(crafty.currentFrame.elements.ScrollBar):SetValue(0)
 
-	self:BuildList()
-	if #self.found > 0 and self:State().searchText ~= '' then
-		self:SelectFirst()
+	crafty.BuildList()
+	if #crafty.found > 0 and crafty.State().searchText ~= '' then
+		crafty.SelectFirst()
 	end
-	self:UpdateListing()
+	crafty.UpdateListing()
 end
 
-function crafty:SelectFirst()
-	if self.mode == CRAFT and GetCraftSelectionIndex() > 0 then
-		CraftFrame_SetSelection(self.found[1].index)
-	elseif self.mode == TRADE then
-		TradeSkillFrame_SetSelection(self.found[1].index)
+function crafty.SelectFirst()
+	if crafty.mode == CRAFT and GetCraftSelectionIndex() > 0 then
+		CraftFrame_SetSelection(crafty.found[1].index)
+	elseif crafty.mode == TRADE then
+		TradeSkillFrame_SetSelection(crafty.found[1].index)
 	end
 end
 
-function crafty:SelectionInList(skillOffset)
-	for i = skillOffset + 1, skillOffset + (self.mode == CRAFT and CRAFTS_DISPLAYED or TRADE_SKILLS_DISPLAYED) do
-		if self.found[i] and self.found[i].index == (self.mode == CRAFT and GetCraftSelectionIndex() or GetTradeSkillSelectionIndex()) then
+function crafty.SelectionInList(skillOffset)
+	for i = skillOffset + 1, skillOffset + (crafty.mode == CRAFT and CRAFTS_DISPLAYED or TRADE_SKILLS_DISPLAYED) do
+		if crafty.found[i] and crafty.found[i].index == (crafty.mode == CRAFT and GetCraftSelectionIndex() or GetTradeSkillSelectionIndex()) then
 			return true
 		end
 	end
 	return false
 end
 
-function crafty:BuildList()
-	self.found = {}
+function crafty.BuildList()
+	crafty.found = {}
 	local reagents = {}
 	local skills = {}
 
-	local matcher = self:FuzzyMatcher(self:State().searchText)
+	local matcher = crafty.FuzzyMatcher(crafty.State().searchText)
 	
-	for i = 1, self.mode == CRAFT and GetNumCrafts() or GetNumTradeSkills() do
+	for i = 1, crafty.mode == CRAFT and GetNumCrafts() or GetNumTradeSkills() do
 		local skillName, skillType, numAvailable, isExpanded, requires
-		if self.mode == CRAFT then
+		if crafty.mode == CRAFT then
 			skillName, _, skillType, numAvailable, isExpanded = GetCraftInfo(i)
 			requires = GetCraftSpellFocus(i)
-		elseif self.mode == TRADE then
+		elseif crafty.mode == TRADE then
 			skillName, skillType, numAvailable, isExpanded = GetTradeSkillInfo(i)
 			requires = GetTradeSkillTools(i)
 		end
@@ -540,11 +540,11 @@ function crafty:BuildList()
 
 		local reagents = {}
 		local reagentsRating
-		for j = 1, self.mode == CRAFT and GetCraftNumReagents(i) or GetTradeSkillNumReagents(i) do
+		for j = 1, crafty.mode == CRAFT and GetCraftNumReagents(i) or GetTradeSkillNumReagents(i) do
 			local reagentName
-			if self.mode == CRAFT then
+			if crafty.mode == CRAFT then
 				reagentName = GetCraftReagentInfo(i, j)
-			elseif self.mode == TRADE then
+			elseif crafty.mode == TRADE then
 				reagentName = GetTradeSkillReagentInfo(i, j)
 			end
 			
@@ -584,8 +584,8 @@ function crafty:BuildList()
 
 	local found
 
-	if self:State().searchText == '' and not self:State().materials then
-		found = self:State().favorites
+	if crafty.State().searchText == '' and not crafty.State().materials then
+		found = crafty.State().favorites
 	else
 		found = {}
 
@@ -619,7 +619,7 @@ function crafty:BuildList()
 			end
 		end
 
-		if self:State().materials then
+		if crafty.State().materials then
 			for _, skill in pairs(skills) do
 				if skill.available == 0 then
 					found[skill.name] = nil
@@ -630,12 +630,12 @@ function crafty:BuildList()
 
 	for skill, data in pairs(skills) do
 		if found[skill] then
-			tinsert(self.found, data)
+			tinsert(crafty.found, data)
 		end
 	end
 
-	sort(self.found, function(a, b)
-		if self:State().searchText == '' then
+	sort(crafty.found, function(a, b)
+		if crafty.State().searchText == '' then
 			return a.index < b.index
 		else
 			if b.rating < a.rating then
@@ -655,9 +655,9 @@ function crafty:BuildList()
 	end)
 end
 
-function crafty:SendReagentMessage(channel, who)
+function crafty.SendReagentMessage(channel, who)
 
-	local index = self.mode == CRAFT and GetCraftSelectionIndex() or GetTradeSkillSelectionIndex()
+	local index = crafty.mode == CRAFT and GetCraftSelectionIndex() or GetTradeSkillSelectionIndex()
 
 	if index == 0 then
 		return
@@ -665,10 +665,10 @@ function crafty:SendReagentMessage(channel, who)
 
 	local message = {}
 
-	local messagePart = (self.mode == CRAFT and GetCraftItemLink(index) or GetTradeSkillItemLink(index))..' ='
-	for i = 1, self.mode == CRAFT and GetCraftNumReagents(index) or GetTradeSkillNumReagents(index) do
-		local reagentLink = self.mode == CRAFT and GetCraftReagentItemLink(index, i) or GetTradeSkillReagentItemLink(index, i)
-		local reagentCount = (self.mode == CRAFT and {GetCraftReagentInfo(index, i)} or {GetTradeSkillReagentInfo(index, i)})[3]
+	local messagePart = (crafty.mode == CRAFT and GetCraftItemLink(index) or GetTradeSkillItemLink(index))..' ='
+	for i = 1, crafty.mode == CRAFT and GetCraftNumReagents(index) or GetTradeSkillNumReagents(index) do
+		local reagentLink = crafty.mode == CRAFT and GetCraftReagentItemLink(index, i) or GetTradeSkillReagentItemLink(index, i)
+		local reagentCount = (crafty.mode == CRAFT and {GetCraftReagentInfo(index, i)} or {GetTradeSkillReagentInfo(index, i)})[3]
 
 		if not reagentLink then
 			return
@@ -692,7 +692,7 @@ function crafty:SendReagentMessage(channel, who)
 	end
 end
 
-function crafty:FuzzyMatcher(input)
+function crafty.FuzzyMatcher(input)
 	local uppercaseInput = strupper(input)
 	local pattern = '(.*)'
 	local captures = 0
