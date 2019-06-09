@@ -2,8 +2,8 @@ local crafty = CreateFrame'Frame'
 crafty:SetScript('OnUpdate', function()
 	this:UPDATE()
 end)
-crafty:SetScript('OnEvent', function()
-	this[event](this)
+crafty:SetScript('OnEvent', function(self, event, ...)
+	this[event](self, ...)
 end)
 crafty:RegisterEvent'ADDON_LOADED'
 
@@ -126,7 +126,7 @@ function crafty:UPDATE()
 	end
 end
 
-function crafty:ADDON_LOADED()
+function crafty:ADDON_LOADED(self, arg1)
 	if arg1 ~= 'crafty' then
 		return
 	end
@@ -139,12 +139,12 @@ function crafty:ADDON_LOADED()
 	local origSetItemRef = SetItemRef
 	SetItemRef = function(...)
 		local popup = StaticPopup_FindVisible'CRAFTY_LINK'
-	    local _, _, playerName = strfind(unpack(arg), 'player:(.+)')
+	    local _, _, playerName = strfind(..., 'player:(.+)')
 	    if popup and IsShiftKeyDown() and playerName then
 	    	getglobal(popup:GetName()..'EditBox'):SetText(playerName)
 	    	return
 	    end
-	    return origSetItemRef(unpack(arg))
+	    return origSetItemRef(...)
 	end
 
 	-- Create main frame 
@@ -270,7 +270,7 @@ function crafty:ADDON_LOADED()
 	self.frame.LinkButton:SetPoint('LEFT', self.frame.MaterialsButton, 'RIGHT', 2, 0)
 	self.frame.LinkButton:SetText'Link'
 	self.frame.LinkButton:RegisterForClicks('LeftButtonUp', 'RightButtonUp')
-	self.frame.LinkButton:SetScript('OnClick', function() 
+	self.frame.LinkButton:SetScript('OnClick', function(_, arg1) 
 		if StaticPopup_Visible'CRAFTY_LINK' then 
 			StaticPopup_Hide'CRAFTY_LINK'
 		elseif arg1 == 'RightButton' then
@@ -287,7 +287,7 @@ function crafty:ADDON_LOADED()
 end
 
 function crafty:Relevel(frame)
-	for _, child in {frame:GetChildren()} do
+	for _, child in pairs{frame:GetChildren()} do
 		child:SetFrameLevel(frame:GetFrameLevel() + 1)
 		self:Relevel(child)
 	end
@@ -310,7 +310,7 @@ function crafty:CRAFT_SHOW()
 			getglobal('Craft'..i):SetScript('OnDoubleClick', function()
 				self.frame.SearchBox:SetText(GetCraftInfo(this:GetID()))
 			end)
-			getglobal('Craft'..i):SetScript('OnMouseDown', function()
+			getglobal('Craft'..i):SetScript('OnMouseDown', function(_, arg1)
 				if arg1 == 'RightButton' then
 					local favorites, name = self:State().favorites, GetCraftInfo(this:GetID())
 					favorites[name] = not favorites[name] or nil
@@ -340,7 +340,7 @@ function crafty:TRADE_SKILL_SHOW()
 			getglobal('TradeSkillSkill'..i):SetScript('OnDoubleClick', function()
 				self.frame.SearchBox:SetText(GetTradeSkillInfo(this:GetID()))
 			end)
-			getglobal('TradeSkillSkill'..i):SetScript('OnMouseDown', function()
+			getglobal('TradeSkillSkill'..i):SetScript('OnMouseDown', function(_, arg1)
 				if arg1 == 'RightButton' then
 					local favorites, name = self:State().favorites, GetTradeSkillInfo(this:GetID())
 					favorites[name] = not favorites[name] or nil
@@ -407,10 +407,10 @@ function crafty:UpdateListing()
 			end
 		end
 		
-		FauxScrollFrame_Update(getglobal(self.currentFrame.elements.Scroll), getn(self.found), (self.mode == CRAFT and CRAFTS_DISPLAYED or TRADE_SKILLS_DISPLAYED), (self.mode == CRAFT and CRAFT_SKILL_HEIGHT or TRADE_SKILL_HEIGHT), nil, nil, nil, getglobal(self.currentFrame.elements.Highlight), 293, 316 )
+		FauxScrollFrame_Update(getglobal(self.currentFrame.elements.Scroll), #self.found, (self.mode == CRAFT and CRAFTS_DISPLAYED or TRADE_SKILLS_DISPLAYED), (self.mode == CRAFT and CRAFT_SKILL_HEIGHT or TRADE_SKILL_HEIGHT), nil, nil, nil, getglobal(self.currentFrame.elements.Highlight), 293, 316 )
 		getglobal(self.currentFrame.elements.Highlight):Hide()
 		
-		if getn(self.found) > 0 then
+		if #self.found > 0 then
 					
 			for i = 1, self.mode == CRAFT and CRAFTS_DISPLAYED or TRADE_SKILLS_DISPLAYED do
 				local skillIndex = i + skillOffset
@@ -496,7 +496,7 @@ function crafty:Search()
 	getglobal(self.currentFrame.elements.ScrollBar):SetValue(0)
 
 	self:BuildList()
-	if getn(self.found) > 0 and self:State().searchText ~= '' then
+	if #self.found > 0 and self:State().searchText ~= '' then
 		self:SelectFirst()
 	end
 	self:UpdateListing()
@@ -589,7 +589,7 @@ function crafty:BuildList()
 	else
 		found = {}
 
-		for _, skill in skills do
+		for _, skill in pairs(skills) do
 			if skill.rating then
 				found[skill.name] = true
 			end
@@ -597,9 +597,9 @@ function crafty:BuildList()
 
 		while true do
 			local changed
-			for _, skill in skills do
+			for _, skill in pairs(skills) do
 				if found[skill.name] then
-					for _, reagentName in skill.reagents do
+					for _, reagentName in pairs(skill.reagents) do
 						local reagent = skills[reagentName]
 						if reagent then
 							if not found[reagentName] then
@@ -620,7 +620,7 @@ function crafty:BuildList()
 		end
 
 		if self:State().materials then
-			for _, skill in skills do
+			for _, skill in pairs(skills) do
 				if skill.available == 0 then
 					found[skill.name] = nil
 				end
@@ -628,7 +628,7 @@ function crafty:BuildList()
 		end
 	end
 
-	for skill, data in skills do
+	for skill, data in pairs(skills) do
 		if found[skill] then
 			tinsert(self.found, data)
 		end
@@ -706,7 +706,7 @@ function crafty:FuzzyMatcher(input)
 		local match = {strfind(strupper(candidate), pattern)}
 		if match[1] then
 			local rating = 0
-			for i = 4, getn(match) - 1 do
+			for i = 4, #match - 1 do
 				if strlen(match[i]) == 0 then
 					rating = rating + 1
 				end
