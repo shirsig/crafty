@@ -278,7 +278,7 @@ function crafty.ADDON_LOADED(_, arg1)
 		end
 
 		if arg1 == 'LeftButton' then
-			local channel = GetNumPartyMembers() == 0 and 'WHISPER' or 'PARTY'
+			local channel = GetNumGroupMembers() == 0 and 'WHISPER' or 'PARTY'
 			if channel == 'PARTY' or ChatEdit_GetLastTellTarget(ChatFrameEditBox) ~= '' then
 				crafty.SendReagentMessage(channel, ChatEdit_GetLastTellTarget(ChatFrameEditBox))
 			end
@@ -415,9 +415,10 @@ function crafty.UpdateListing()
 			for i = 1, crafty.mode == CRAFT and CRAFTS_DISPLAYED or TRADE_SKILLS_DISPLAYED do
 				local skillIndex = i + skillOffset
 				skillButton = getglobal((crafty.mode == CRAFT and 'Craft' or 'TradeSkillSkill')..i)
+				skillButtonText = getglobal((crafty.mode == CRAFT and 'Craft' or 'TradeSkillSkill')..i.."SubText")
 
 				if crafty.found[skillIndex] then
-					if getglobal(crafty.currentFrame.elements.Scroll):IsVisible() then
+					if getglobal(crafty.currentFrame.elements.Scroll):IsShown() then
 						skillButton:SetWidth(293)
 					else
 						skillButton:SetWidth(323)
@@ -425,7 +426,12 @@ function crafty.UpdateListing()
 
 					local color = (crafty.mode == CRAFT and CraftTypeColor[crafty.found[skillIndex].type] or TradeSkillTypeColor[crafty.found[skillIndex].type])
 					if color then
-						skillButton:GetNormalFontObject():SetTextColor(color.r, color.g, color.b)
+						skillButton:SetNormalFontObject(color.font);
+						skillButtonText:SetTextColor(color.r, color.g, color.b)
+						skillButton.r = color.r;
+						skillButton.g = color.g;
+						skillButton.b = color.b;
+						skillButton.font = color.font;
 					end
 					skillButton:SetID(crafty.found[skillIndex].index)
 					skillButton:Show()
@@ -436,8 +442,9 @@ function crafty.UpdateListing()
 
 					skillButton:SetNormalTexture('')
 					getglobal((crafty.mode == CRAFT and 'Craft' or 'TradeSkillSkill')..i..'Highlight'):SetTexture''
-					if crafty.found[skillIndex].available == 0 then
+					if crafty.found[skillIndex].available <= 0 then
 						skillButton:SetText(' '..crafty.found[skillIndex].name)
+						skillButtonText:SetWidth(275)
 					else
 						skillButton:SetText(' '..crafty.found[skillIndex].name..' ['..crafty.found[skillIndex].available..']')
 					end
@@ -445,7 +452,11 @@ function crafty.UpdateListing()
 					if (crafty.mode == CRAFT and GetCraftSelectionIndex() or GetTradeSkillSelectionIndex()) == crafty.found[skillIndex].index then
 						getglobal(crafty.currentFrame.elements.Highlight):SetPoint('TOPLEFT', skillButton, 'TOPLEFT', 0, 0)
 						getglobal(crafty.currentFrame.elements.Highlight):Show()
+
+						skillButtonText:SetTextColor(HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b);
+
 						skillButton:LockHighlight()
+						skillButton.isHighlighted = true;
 						-- Setting the num avail so the create all button works for tradeskills
 						if crafty.mode == TRADE and getglobal(crafty.frames.trade.elements.Main) then
 							getglobal(crafty.currentFrame.elements.Main).numAvailable = crafty.found[skillIndex].available
@@ -455,22 +466,27 @@ function crafty.UpdateListing()
 							getglobal(crafty.currentFrame.elements.Highlight):Hide()
 						end
 						skillButton:UnlockHighlight()
+						skillButton.isHighlighted = false;
 					end
+					-- end
 				else
 					skillButton:Hide()
 				end
 			end
+
 		else
 			getglobal(crafty.currentFrame.elements.Scroll):Hide()
 			for i = 1, crafty.mode == CRAFT and CRAFTS_DISPLAYED or TRADE_SKILLS_DISPLAYED do
 				skillButton = getglobal((crafty.mode == CRAFT and 'Craft' or 'TradeSkillSkill')..i)
+				skillButtonText = getglobal((crafty.mode == CRAFT and 'Craft' or 'TradeSkillSkill')..i.."SubText")
 				if i == 1 then
 					skillButton:Disable()
 					skillButton:SetWidth(323)
-					skillButton:GetDisabledFontObject():SetTextColor(1, 1, 1)
+					skillButtonText:SetTextColor(1, 1, 1)
 					skillButton:SetDisabledTexture''
 					skillButton:SetText'No results matched your search.'
 					skillButton:UnlockHighlight()
+					skillButton.isHighlighted = false;
 					skillButton:Show()
 				else
 					skillButton:Hide()
@@ -479,13 +495,12 @@ function crafty.UpdateListing()
 		end
 	else
 		if crafty.mode == CRAFT then
-			crafty.frames.craft.orig_update()
 		elseif crafty.mode == TRADE then
 			for i = 1, TRADE_SKILLS_DISPLAYED do
 				getglobal('TradeSkillSkill'..i..'Text'):SetPoint('TOPLEFT', 'TradeSkillSkill'..i, 'TOPLEFT', 21, 0)
 			end
-			crafty.frames.trade.orig_update()
 		end
+		crafty.currentFrame.orig_update()
 	end
 end
 
@@ -527,6 +542,7 @@ function crafty.BuildList()
 	local matcher = crafty.FuzzyMatcher(crafty.State().searchText)
 
 	for i = 1, crafty.mode == CRAFT and GetNumCrafts() or GetNumTradeSkills() do
+
 		local skillName, skillType, numAvailable, isExpanded, requires
 		if crafty.mode == CRAFT then
 			skillName, _, skillType, numAvailable, isExpanded = GetCraftInfo(i)
