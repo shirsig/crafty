@@ -1,9 +1,7 @@
-## Interface: 11200
+## Interface: 11302
 ## Author: shirsig
 ## Title: crafty
 ## Notes: Profession window extension
 ## Version: 1.0
-## LoadOnDemand: 1
-## LoadWith: Blizzard_TradeSkillUI, Blizzard_CraftUI
 ## SavedVariablesPerCharacter: crafty_favorites
 crafty.lua
